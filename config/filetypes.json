@@ -1,0 +1,9 @@
+{
+    "osl": {
+        "supported": [
+            "originOS"
+        ],
+        "name": "Origin Scripting Language",
+        "description": "A scripting language for the Origin platform."
+    }
+}

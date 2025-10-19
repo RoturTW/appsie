@@ -1,0 +1,6 @@
+
+def homePage(*gin.Context c) (
+    c.HTML(200, "index.html", {
+        title: "Hello, World!",
+    })
+)

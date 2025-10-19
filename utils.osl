@@ -1,0 +1,118 @@
+
+def loadConfig(string name) object (
+    string path = fs.JoinPath("./config", name)
+    value := fs.ReadFile(path).JsonParse()
+    if typeof(value) !== "object" (
+        println("error: config file '" ++ name ++ "' is not a valid json object")
+    )
+    return value.assert(object)
+)
+
+def getAppInfo(string appname) object (
+    string path = fs.JoinPath("./apps", appname)
+    string infoPath = fs.JoinPath(path, "info.json")
+    boolean exists = fs.Exists(infoPath)
+
+    if !exists (
+        return {
+            ok: false,
+            error: "app not found",
+        }
+    )
+
+
+    object info = fs.ReadFile(infoPath).JsonParse()
+
+    string iconPath = fs.JoinPath(path, "icon.icn")
+    boolean iconExists = fs.Exists(iconPath)
+    if iconExists (
+        info.icon = fs.ReadFile(iconPath)
+    )
+
+    info.supports = []
+    info.scripts = {}
+
+    array fileNames = fs.ReadDir(path)
+    for i fileNames.len (
+        string fileName = fileNames[i]
+        if fileName.startsWith(".") (
+            continue
+        )
+        boolean isDir = fs.IsDir(fs.JoinPath(path, fileName))
+        string fileType = fs.GetExt(fileName).stripStart(".")
+        if fileTypes[fileType] != null (
+            object data = fileTypes[fileType]
+            array supports = data.supported
+            array info_supports = info.supports
+            for k supports.len (
+                info_supports = info_supports.append(supports[k])
+            )
+
+            string scriptPath = fs.JoinPath(path, fileName)
+            info.scripts[fileType] = {
+                size: fs.GetSize(scriptPath),
+            }
+        )
+        fileNames[i] = fileName
+        if fileName === "screenshots" and isDir (
+            array screenshots = fs.ReadDir(fs.JoinPath(path, fileName))
+            info.screenshots = []
+            for k screenshots.len (
+                string screenshot = screenshots[k]
+                if screenshot.startsWith(".") (
+                    continue
+                )
+                array screenshots = info.screenshots
+                screenshots = screenshots.append(screenshot)
+                info.screenshots = screenshots
+            )
+        )
+    )
+
+    info.author = info.authors.join(", ")
+
+    return {
+        ok: true,
+        info,
+    }
+)
+
+def randomString(int length) string (
+    string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    string result = ""
+    for i length (
+        result = result + chars[rand.Intn(chars.len) + 1].toStr()
+    )
+    return result
+)
+
+def getAllApps() object (
+    string path = "./apps"
+    boolean exists = fs.Exists(path)
+
+    if !exists (
+        return {
+            ok: false,
+            error: "apps not found",
+        }
+    )
+
+    object apps = {}
+
+    array folders = fs.ReadDir(path)
+    for i folders.len (
+        string fileName = folders[i]
+        if fileName.startsWith(".") (
+            continue
+        )
+        object info = getAppInfo(fileName)
+        if info.ok == true (
+            apps[fileName] = info.info
+        )
+    )
+
+    return {
+        ok: true,
+        apps: apps,
+    }
+)

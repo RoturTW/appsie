@@ -1,0 +1,30 @@
+
+def handleAppInfo(*gin.Context c) (
+    c.JSON(200, getAppInfo(c.Param("appname")))
+)
+
+def handleAppIcon(*gin.Context c) (
+    c.File(fs.JoinPath("./apps", c.Param("appname"), "icon.icn"))
+)
+
+def handleAppFile(*gin.Context c) (
+    string appname = c.Param("appname")
+    string fileType = c.Param("filetype")
+
+    string path = fs.JoinPath("./apps", appname, "script." ++ fileType.toLower())
+    boolean exists = fs.Exists(path)
+
+    if !exists (
+        c.JSON(404, {
+            ok: false,
+            error: "app not found",
+        })
+        return
+    )
+
+    c.File(path)
+)
+
+def handleAllApps(*gin.Context c) (
+    c.JSON(200, getAllApps())
+)

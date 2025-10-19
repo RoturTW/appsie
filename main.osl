@@ -1,0 +1,46 @@
+import "osl/fs"
+import "osl/requests"
+
+import "math/rand"
+import "github.com/gin-gonic/gin"
+
+import "./api.osl"
+import "./dev.osl"
+import "./utils.osl"
+import "./pages.osl"
+import "./apps.osl"
+import "./middleware.osl"
+
+string port = "8080"
+
+object systems = loadConfig("systems.json")
+object fileTypes = loadConfig("filetypes.json")
+
+object sessions = {}
+
+def main() (
+
+    r := gin.Default()
+
+    r.LoadHTMLGlob("templates/*")
+    r.GET("/", homePage)
+
+    api := r.Group("/api")
+    api.GET("/up", up)
+    api.GET("/auth", handleDevAuth)
+    api.GET("/apps", requireSession, handleMyApps)
+    // manage apps
+    api.POST("/apps/create", requireSession, handleCreateApp)
+    api.PUT("/apps/:appname", requireSession, handleUpdateApp)
+    // show and hide apps from the app store
+    api.POST("/apps/show", requireSession, handleShowApp)
+    api.POST("/apps/hide", requireSession, handleHideApp)
+
+    apps := r.Group("/apps")
+    apps.GET("/info/:appname", handleAppInfo)
+    apps.GET("/icon/:appname", handleAppIcon)
+    apps.GET("/download/:appname/:filetype", handleAppFile)
+    apps.GET("/all", handleAllApps)
+
+    r.Run(":" ++ port)
+)

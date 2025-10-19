@@ -1,0 +1,14 @@
+
+def requireSession(*gin.Context c) (
+    string sessionId = c.Cookie("session_id").toArray()[1].toStr()
+    if sessionId == "" (
+        c.JSON(401, { ok: false, error: "not logged in" })
+        return
+    )
+    if !sessions.contains(sessionId) (
+        c.JSON(401, { ok: false, error: "invalid session" })
+        return
+    )
+    c.Set("username", sessions[sessionId])
+    c.Next()
+)

@@ -1,0 +1,3 @@
+def up(*gin.Context c) (
+    c.String(200, "ok")
+)

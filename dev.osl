@@ -1,0 +1,121 @@
+// backend api for dev management of their apps
+
+def handleDevAuth(*gin.Context c) (
+    string token = c.Query("v")
+    if token == "" (
+        c.JSON(401, { ok: false, error: "missing token" })
+        return
+    )
+    object resp = requests.Get("https://api.rotur.dev/validate?key=rotur-app-store&v=" + token)
+
+    if !resp.success (
+        c.JSON(401, { ok: false, error: "failed to validate token" })
+        return
+    )
+
+    object json = resp.body.toStr().JsonParse()
+    if json.error != null (
+        c.JSON(401, { ok: false, error: json.error })
+        return
+    )
+    if !json.valid (
+        c.JSON(401, { ok: false, error: "invalidate token" })
+        return
+    )
+
+    string sessionId = randomString(32)
+    sessions[sessionId] = json.username
+
+    c.SetCookie("session_id", sessionId, 3600, "/", "", false, true)
+
+    c.JSON(200, { ok: true, token: token })
+)
+
+def handleMyApps(*gin.Context c) (
+    object resp = getAllApps()
+    if !resp.ok (
+        c.String(400, resp.error.toStr())
+        return
+    )
+
+    array apps = resp.apps
+    
+    string username = c.MustGet("username")
+    array myApps = []
+    for i apps.len (
+        object app = apps[i]
+        if app["authors"].contains(username) (
+            myApps = myApps.append(app)
+        )
+    )
+    c.JSON(200, myApps)
+    return
+)
+
+def handleCreateApp(*gin.Context c) (
+    string appname = c.Query("appname")
+    if appname == "" (
+        c.JSON(400, { ok: false, error: "missing appname" })
+        return
+    )
+    if !fs.Exists(fs.JoinPath("./apps", appname)) (
+        c.JSON(400, { ok: false, error: "app already exists" })
+        return
+    )
+    fs.CopyDir(fs.JoinPath("./apps", ".template"), fs.JoinPath("./apps", appname))
+    c.JSON(200, { ok: true })
+)
+
+def handleUpdateApp(*gin.Context c) (
+    string appname = c.Param("appname")
+    string version = c.Query("version")
+    if version == "" (
+        c.JSON(400, { ok: false, error: "missing version" })
+        return
+    )
+    if appname == "" (
+        c.JSON(400, { ok: false, error: "missing appname" })
+        return
+    )
+    string path = fs.JoinPath("./apps", appname)
+    if !fs.Exists(path) (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+    
+    // object info = fs.ReadFile(fs.JoinPath(path, "info.json")).JsonParse()
+    
+    object newInfo = c.Request.Body.toStr().JsonParse()
+
+    log newInfo.JsonStringify()
+
+    c.JSON(200, { ok: true })
+)
+
+def handleHideApp(*gin.Context c) (
+    string appname = c.Param("appname")
+    string path = fs.JoinPath("./apps", appname)
+
+    if !fs.Exists(path) (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+
+    fs.Rename(fs.JoinPath(path, "info.json"), fs.JoinPath(path, "info.json.hidden"))
+
+    c.JSON(200, { ok: true })
+)
+
+def handleShowApp(*gin.Context c) (
+    string appname = c.Param("appname")
+    string path = fs.JoinPath("./apps", appname)
+
+    if !fs.Exists(path) (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+
+    fs.Rename(fs.JoinPath(path, "info.json.hidden"), fs.JoinPath(path, "info.json"))
+
+    c.JSON(200, { ok: true })
+)
