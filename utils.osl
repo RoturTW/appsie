@@ -30,7 +30,10 @@ def getAppInfo(string appname) object (
     )
 
     info.supports = []
+    array info_supports = info.supports
+
     info.scripts = {}
+    object info_scripts = info.scripts
 
     array fileNames = fs.ReadDir(path)
     for i fileNames.len (
@@ -43,13 +46,13 @@ def getAppInfo(string appname) object (
         if fileTypes[fileType] != null (
             object data = fileTypes[fileType]
             array supports = data.supported
-            array info_supports = info.supports
             for k supports.len (
-                info_supports = info_supports.append(supports[k])
+                void info_supports.append(supports[k])
             )
+            info.supports = info_supports
 
             string scriptPath = fs.JoinPath(path, fileName)
-            info.scripts[fileType] = {
+            info_scripts[fileType] = {
                 size: fs.GetSize(scriptPath),
             }
         )
@@ -73,7 +76,7 @@ def getAppInfo(string appname) object (
 
     return {
         ok: true,
-        info,
+        info: info,
     }
 )
 

@@ -45,7 +45,7 @@ def handleMyApps(*gin.Context c) (
     for i apps.len (
         object app = apps[i]
         if app["authors"].contains(username) (
-            myApps = myApps.append(app)
+            void myApps.append(app)
         )
     )
     c.JSON(200, myApps)
@@ -83,11 +83,21 @@ def handleUpdateApp(*gin.Context c) (
         return
     )
     
-    // object info = fs.ReadFile(fs.JoinPath(path, "info.json")).JsonParse()
+    string infoPath = fs.JoinPath(path, "info.json")
+
+    object info = fs.ReadFile(infoPath).JsonParse()
     
     object newInfo = c.Request.Body.toStr().JsonParse()
 
-    log newInfo.JsonStringify()
+    array keys = newInfo.getKeys()
+    for i keys.len (
+        string key = keys[i]
+        if info.contains(key) (
+            info[key] = newInfo[key]
+        )
+    )
+
+    fs.WriteFile(infoPath, info.JsonFormat())
 
     c.JSON(200, { ok: true })
 )
