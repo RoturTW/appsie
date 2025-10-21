@@ -1,6 +1,35 @@
+array buttons = [
+    {
+        Name: "Analytics",
+        Src: "../static/assets/icons/analytics.svg",
+    },
+    {
+        Name: "My Apps",
+        Src: "../static/assets/icons/apps.svg",
+    },
+    {
+        Name: "Promote",
+        Src: "../static/assets/icons/promote.svg",
+    },
+    {
+        Name: "Help",
+        Src: "../static/assets/icons/help.svg",
+    },
+]
 
 def homePage(*gin.Context c) (
+    string username = "Mist"
+
+    array send_buttons = buttons.clone()
+
+    void send_buttons.prepend({
+        Name: "My Profile",
+        Src: "https://avatars.rotur.dev/" ++ username,
+    })
+
     c.HTML(200, "index.html", {
         title: "Hello, World!",
+        username,
+        Buttons: send_buttons,
     })
 )

@@ -1,0 +1,11 @@
+<div id="sidebar">
+  <div id="buttons">
+    {{range .Buttons}}
+      <div class="rounded button">
+        <img src="{{ .Src }}" class="icon rounded">
+        <p>{{ .Name }}</p>
+      </div>
+    {{end}}
+  </div>
+  <div id="sideline"></div>
+</div>

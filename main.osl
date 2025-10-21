@@ -24,6 +24,7 @@ def main() (
 
     r.LoadHTMLGlob("templates/*")
     r.GET("/", homePage)
+    r.Static("/static", "./static")
 
     api := r.Group("/api")
     api.GET("/up", up)
