@@ -27,6 +27,10 @@ def getAppInfo(string appname) object (
     object info = fs.ReadFile(infoPath).JsonParse()
     info.hidden = infoPath.endsWith(".hidden")
 
+    object approvals = readApprovals()
+    boolean approved_status = approvals[appname.toLower()] == true
+    info.approved = approved_status
+
     string iconPath = fs.JoinPath(path, "icon.icn")
     boolean iconExists = fs.Exists(iconPath)
     if iconExists (
@@ -132,7 +136,7 @@ def getAllApps(boolean showHidden) object (
         object info = getAppInfo(fileName)
         if info.ok == true (
             object app = info.info
-            if app.hidden == false or showHidden == true (
+            if ((app.hidden == false and app.approved == true) or showHidden == true) (
                 apps[fileName] = app
             )
         )
@@ -182,4 +186,20 @@ def getAppFile(string appname, string filetype) object (
         ok: true,
         data: fs.ReadFile(path),
     }
+)
+
+def readApprovals() object (
+    string path = fs.JoinPath("./config", "approvals.json")
+    if !fs.Exists(path) (
+        fs.WriteFile(path, "{}")
+    )
+    data := fs.ReadFile(path).JsonParse()
+    if typeof(data) !== "object" (
+        return {}
+    )
+    return data
+)
+
+def writeApprovals(object approvals) (
+    fs.WriteFile(fs.JoinPath("./config", "approvals.json"), approvals.JsonFormat())
 )

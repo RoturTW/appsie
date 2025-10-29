@@ -13,6 +13,7 @@ import "./utils.osl"
 import "./pages.osl"
 import "./apps.osl"
 import "./middleware.osl"
+import "./admin.osl"
 import "./changelog.osl"
 
 string port = ""
@@ -47,6 +48,9 @@ def main() (
     gin.SetMode("release")
 
     r.LoadHTMLGlob("templates/*")
+
+    // Admin dashboard
+    r.GET("/admin", requireSession, requireAdmin, adminPage)
     r.GET("/", requireSession, homePage)
     r.GET("/apps", requireSession, appsPage)
 
@@ -60,6 +64,12 @@ def main() (
     r.GET("/auth", authPage)
 
     api := r.Group("/api")
+    // Admin api group
+    apiAdmin := r.Group("/api/admin")
+    apiAdmin.Use(requireSession, requireAdmin)
+    apiAdmin.POST("/approve/:appname", handleAdminApprove)
+    apiAdmin.POST("/unapprove/:appname", handleAdminUnapprove)
+    
     api.GET("/up", up)
     api.GET("/auth", handleDevAuth)
     api.GET("/logout", requireSession, handleLogout)

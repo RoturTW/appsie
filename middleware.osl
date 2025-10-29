@@ -14,3 +14,15 @@ def requireSession(*gin.Context c) (
     c.Set("username", sessions[sessionId])
     c.Next()
 )
+
+array _admins = ["mist", "flufi", "iris"]
+
+def requireAdmin(*gin.Context c) (
+    string username = c.MustGet("username").toStr().toLower()
+    if !_admins.contains(username) (
+        c.JSON(403, { ok: false, error: "admin access required" })
+        c.Abort()
+        return
+    )
+    c.Next()
+)

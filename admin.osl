@@ -1,0 +1,33 @@
+// Admin specific handlers
+
+def handleAdminApprove(*gin.Context c) (
+    string appname = c.Param("appname")
+
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(404, { ok: false, error: "app not found" })
+        return
+    )
+
+    object approvals = readApprovals()
+    approvals[appname.toLower()] = true
+    writeApprovals(approvals)
+
+    c.JSON(200, { ok: true })
+)
+
+// remove approval for an app
+def handleAdminUnapprove(*gin.Context c) (
+    string appname = c.Param("appname")
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(404, { ok: false, error: "app not found" })
+        return
+    )
+    object approvals = readApprovals()
+    if approvals.contains(appname.toLower()) (
+        approvals.delete(appname.toLower())
+        writeApprovals(approvals)
+    )
+    c.JSON(200, { ok: true })
+)

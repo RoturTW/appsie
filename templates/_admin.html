@@ -1,0 +1,65 @@
+<link rel="stylesheet" href="../static/css/apps.css">
+
+<div class="sort-bar" style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+  <input id="search-input" placeholder="Search apps..." style="flex:1;padding:6px 10px;border-radius:6px;background:var(--bg-tertiary);color:var(--text);border:1px solid var(--border-color);">
+</div>
+
+<h2>Pending Approval</h2>
+<div class="app-grid" id="pending-grid">
+  {{ range .Pending }}
+  <div class="app-card" data-title="{{ .title }}" data-version="{{ .version }}" data-description="{{ .description }}">
+    <div class="app-header">
+      <div class="app-info">
+        <p class="app-title">{{ .title }}</p>
+        <p class="app-version">Version {{ .version }}</p>
+      </div>
+    </div>
+    <p class="app-desc">{{ .description }}</p>
+    <div class="app-actions">
+      <a class="app-btn" href="/app/{{ .title }}"><i data-lucide="info"></i></a>
+      <button class="app-btn approve" data-app="{{ .title }}"><i data-lucide="check"></i></button>
+    </div>
+  </div>
+  {{ end }}
+</div>
+
+<h2 style="margin-top:24px;">Approved Apps</h2>
+<div class="app-grid" id="approved-grid">
+  {{ range .Approved }}
+  <div class="app-card" data-title="{{ .title }}" data-version="{{ .version }}" data-description="{{ .description }}">
+    <div class="app-header">
+      <div class="app-info">
+        <p class="app-title">{{ .title }}</p>
+        <p class="app-version">Version {{ .version }}</p>
+      </div>
+    </div>
+    <p class="app-desc">{{ .description }}</p>
+    <div class="app-actions">
+      <a class="app-btn" href="/app/{{ .title }}"><i data-lucide="info"></i></a>
+      <button class="app-btn unapprove" data-app="{{ .title }}"><i data-lucide="x"></i></button>
+    </div>
+  </div>
+  {{ end }}
+</div>
+
+<script>
+  lucide.createIcons();
+  async function act(btn,url){
+    const app=btn.dataset.app;
+    const res=await fetch(url+app,{method:'POST'});
+    if(res.ok)location.reload();
+    else alert('Request failed');
+  }
+  document.querySelectorAll('.approve').forEach(b=>b.onclick=()=>act(b,'/api/admin/approve/'));
+  document.querySelectorAll('.unapprove').forEach(b=>b.onclick=()=>act(b,'/api/admin/unapprove/'));
+
+  const search=document.getElementById('search-input');
+  search.addEventListener('input',()=>{
+    const q=search.value.toLowerCase();
+    document.querySelectorAll('.app-card').forEach(card=>{
+      const txt=(card.dataset.title+card.dataset.version+card.dataset.description).toLowerCase();
+      card.style.display=txt.includes(q)?'block':'none';
+    });
+  });
+</script>
+

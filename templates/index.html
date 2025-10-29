@@ -27,6 +27,9 @@
         {{ else if eq .Page "create" }}
           {{ template "_create.html" . }}
 
+        {{ else if eq .Page "admin" }}
+          {{ template "_admin.html" . }}
+
         {{ else if eq .Page "publish" }}
           {{ template "_publish.html" . }}
         {{ end }}

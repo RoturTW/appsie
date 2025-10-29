@@ -371,6 +371,12 @@ def handleShowApp(*gin.Context c) (
     object info = app.info
     array authors = info.authors
 
+    boolean approved = readApprovals()[appname.toLower()] == true
+    if !approved (
+        c.JSON(401, { ok: false, error: "not authorized, app not approved" })
+        return
+    )
+
     for i authors.len (
         string author = authors[i]
         if author == username (
@@ -504,6 +510,12 @@ def handleAppFileDelete(*gin.Context c) (
     if !allowed (
         c.JSON(401, { ok: false, error: "not authorized" })
         return
+    )
+
+    object approvals = readApprovals()
+    if !approvals.contains(appname.toLower()) (
+        approvals.delete(appname.toLower())
+        writeApprovals(approvals)
     )
 
     string path = fs.JoinPath("./apps", appname, relPath, file)

@@ -19,6 +19,13 @@ array buttons = [
 def mainObject(*gin.Context c) object (
     string username = c.MustGet("username").toStr()
     array send_buttons = buttons.clone()
+    if ["mist", "flufi", "iris"].contains(username.toLower()) (
+        send_buttons.append({
+            Name: "Admin",
+            Src: "check-circle",
+            Link: "/admin",
+        })
+    )
     return {
         Username: username,
         Buttons: send_buttons,
@@ -149,6 +156,38 @@ def createAppPage(*gin.Context c) (
         Main: main,
     })
 )
+
+def adminPage(*gin.Context c) (
+
+    object main = mainObject(c)
+    object resp = getAllApps(true)
+    if !resp.ok (
+        c.HTML(500, "index.html", { Page: "admin", PageName: "Admin", Main: main, Apps: [] })
+        return
+    )
+
+    object apps = resp.apps
+    array appNames = apps.getKeys()
+    array pending = []
+    array approved = []
+    for i appNames.len (
+        object a = apps[appNames[i]]
+        if a.approved == false (
+            void pending.append(a)
+        ) else (
+            void approved.append(a)
+        )
+    )
+
+    c.HTML(200, "index.html", {
+        Page: "admin",
+        PageName: "Admin",
+        Main: main,
+        Pending: pending,
+        Approved: approved,
+    })
+)
+
 
 def publishPage(*gin.Context c) (
 
