@@ -15,7 +15,7 @@ import "./apps.osl"
 import "./middleware.osl"
 import "./changelog.osl"
 
-string port = "8080"
+string port = ""
 
 object systems = loadConfig("systems.json")
 object fileTypes = loadConfig("filetypes.json")
@@ -25,6 +25,11 @@ object sessions = {}
 def main() (
 
     gotdotenv.Load()
+
+    port = os.Getenv("APPSIE_PORT")
+    if port == "" {
+        port = "5612"
+    }
 
     r := gin.Default()
 
