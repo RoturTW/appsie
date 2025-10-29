@@ -1,0 +1,113 @@
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  width: calc(100% - 2rem);
+}
+
+.app-card {
+  background-color: var(--primary);
+  border-radius: var(--rounding);
+  padding: calc(var(--spacing) * 1.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: 0.2s ease;
+}
+
+.app-card:hover {
+  transform: translateY(-2px);
+  background-color: var(--primary-hover, #3a3a4a);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+}
+
+.app-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.app-info {
+  flex: 1;
+}
+
+.app-title {
+  font-size: 1.5em;
+  margin: 0;
+  font-weight: 600;
+}
+
+.app-version {
+  font-size: 0.9em;
+  opacity: 0.8;
+  margin-top: 0.2em;
+}
+
+.app-collaborators {
+  display: flex;
+  gap: 4px;
+}
+
+.app-collaborators img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+}
+
+.app-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-top: var(--spacing);
+  gap: var(--spacing);
+  align-items: center;
+}
+
+.app-btn {
+  background: rgba(255,255,255,0.05);
+  border: none;
+  border-radius: var(--rounding);
+  padding: 0.8em;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+  color: var(--text);
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  display: flex;
+}
+
+.app-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.sort-bar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  color: var(--text);
+}
+
+.sort-bar input {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  color: var(--text);
+}
+
+.sort-bar input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}

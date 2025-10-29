@@ -1,0 +1,52 @@
+<link rel="stylesheet" href="../static/css/apps.css">
+
+<div class="sort-bar" style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+  <label for="sort-select">Sort by</label>
+  <select id="sort-select" style="padding:6px 10px;border-radius:6px;background:var(--bg-tertiary);color:var(--text);border:1px solid var(--border-color);">
+    <option value="title">A → Z</option>
+    <option value="title-desc">Z → A</option>
+    <option value="views">Most Views</option>
+    <option value="downloads">Most Downloads</option>
+  </select>
+</div>
+<div class="app-grid">
+  {{ range .Apps }}
+  <div class="app-card" data-title="{{ .title }}" data-views="{{ .views }}" data-downloads="{{ .downloads }}">
+    <div class="app-header">
+      <!-- img src="{{ .icon }}" class="app-icon" -->
+      <div class="app-info">
+        <p class="app-title">{{ .title }}</p>
+        <p class="app-version">Version {{ .version }}</p>
+      </div>
+      <div class="app-stats">
+        <p class="app-views">{{ .views }} views</p>
+        <p class="app-downloads">{{ .downloads }} downloads</p>
+      </div>
+    </div>
+    <div class="app-actions">
+      <a class="app-btn" href="/analytics/{{ .title }}"><i data-lucide="bar-chart"></i></a>
+      <a class="app-btn" href="/app/{{ .title }}"><i data-lucide="edit"></i></a>
+    </div>
+  </div>
+  {{ end }}
+</div>
+<script>
+
+  const select = document.getElementById('sort-select');
+  const grid = document.querySelector('.app-grid');
+
+  select.addEventListener('change', sortCards);
+
+  function sortCards() {
+    const criterion = select.value;
+    const cards = Array.from(grid.children);
+    cards.sort((a,b)=>{
+      if(criterion==='views') return +b.dataset.views - +a.dataset.views;
+      if(criterion==='downloads') return +b.dataset.downloads - +a.dataset.downloads;
+      if(criterion==='title') return a.dataset.title.localeCompare(b.dataset.title);
+      if(criterion==='title-desc') return b.dataset.title.localeCompare(a.dataset.title);
+      return 0;
+    });
+    cards.forEach(card=>grid.appendChild(card));
+  }
+</script>

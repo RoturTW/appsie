@@ -24,45 +24,47 @@ def handleDevAuth(*gin.Context c) (
     )
 
     string sessionId = randomString(32)
-    sessions[sessionId] = json.username
+    
+    string username = token.split(",")[1]
+    sessions[sessionId] = username
 
     c.SetCookie("session_id", sessionId, 3600, "/", "", false, true)
 
     c.JSON(200, { ok: true, token: token })
 )
 
-def handleMyApps(*gin.Context c) (
-    object resp = getAllApps()
-    if !resp.ok (
-        c.String(400, resp.error.toStr())
-        return
-    )
+def handleLogout(*gin.Context c) (
+    c.SetCookie("session_id", "", 3600, "/", "", false, true)
+    c.JSON(200, { ok: true })
+)
 
-    array apps = resp.apps
-    
-    string username = c.MustGet("username")
-    array myApps = []
-    for i apps.len (
-        object app = apps[i]
-        if app["authors"].contains(username) (
-            void myApps.append(app)
-        )
-    )
-    c.JSON(200, myApps)
-    return
+def handleMyApps(*gin.Context c) (
+    string dev = c.MustGet("username")
+    array apps = getAppsByDev(dev)
+    c.JSON(200, apps)
 )
 
 def handleCreateApp(*gin.Context c) (
     string appname = c.Query("appname")
+
+    string username = c.MustGet("username").toStr()
     if appname == "" (
         c.JSON(400, { ok: false, error: "missing appname" })
         return
     )
-    if !fs.Exists(fs.JoinPath("./apps", appname)) (
+    string path = fs.JoinPath("./apps", appname)
+    if fs.Exists(path) (
         c.JSON(400, { ok: false, error: "app already exists" })
         return
     )
     fs.CopyDir(fs.JoinPath("./apps", ".template"), fs.JoinPath("./apps", appname))
+
+    object info = fs.ReadFile(fs.JoinPath(path, "info.json")).JsonParse()
+    info.title = appname
+    array authors = info.authors
+    authors.append(username)
+    info.authors = authors
+    fs.WriteFile(fs.JoinPath(path, "info.json"), info.JsonFormat())
     c.JSON(200, { ok: true })
 )
 
@@ -102,30 +104,435 @@ def handleUpdateApp(*gin.Context c) (
     c.JSON(200, { ok: true })
 )
 
-def handleHideApp(*gin.Context c) (
+// this api is for updating keys in the info.json file
+def updateAppInfo(*gin.Context c) (
     string appname = c.Param("appname")
-    string path = fs.JoinPath("./apps", appname)
+    string username = c.MustGet("username").toStr()
 
-    if !fs.Exists(path) (
-        c.JSON(400, { ok: false, error: "app does not exist" })
+    object app = getAppInfo(appname)
+
+    if app.ok == false (
+        c.JSON(404, { ok: false, error: "app not found" })
         return
     )
 
-    fs.Rename(fs.JoinPath(path, "info.json"), fs.JoinPath(path, "info.json.hidden"))
+    string path = fs.JoinPath("./apps", appname)
+    object info = app.info
+    array authors = info.authors
+
+    string infoPath = ""
+    if app.hidden == true (
+        infoPath = fs.JoinPath(path, "info.json.hidden")
+    ) else (
+        infoPath = fs.JoinPath(path, "info.json")
+    )
+
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+        )
+    )
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    object newInfo = c.Request.Body.toStr().JsonParse()
+
+    object currentInfo = fs.ReadFile(infoPath).JsonParse()
+
+    array keys = newInfo.getKeys()
+    for i keys.len (
+        string key = keys[i]
+        if ["title", "downloads", "views"].contains(key) (
+            continue
+        )
+        currentInfo[key] = newInfo[key]
+    )
+
+    fs.WriteFile(infoPath, currentInfo.JsonFormat())
 
     c.JSON(200, { ok: true })
 )
 
-def handleShowApp(*gin.Context c) (
-    string appname = c.Param("appname")
-    string path = fs.JoinPath("./apps", appname)
 
-    if !fs.Exists(path) (
+def handleAppUpload(*gin.Context c) (
+    string appname = c.Param("appname")
+    string filetype = c.Param("filetype")
+
+    string path = fs.JoinPath("./apps", appname, "script." ++ filetype.toLower())
+
+    c.File(path)
+)
+
+def handleAppDelete(*gin.Context c) (
+    string appname = c.Param("appname")
+    string filetype = c.Param("filetype")
+
+    string path = fs.JoinPath("./apps", appname, "script." ++ filetype.toLower())
+
+    fs.Remove(path)
+
+    c.JSON(200, { ok: true })
+)
+
+def handleAppScreenshotUpload(*gin.Context c) (
+    string appname = c.Param("appname")
+    string screenshot = c.Param("screenshot")
+
+    string username = c.MustGet("username").toStr().toLower()
+
+    object app = getAppInfo(appname)
+    if app.ok == false (
         c.JSON(400, { ok: false, error: "app does not exist" })
         return
     )
 
-    fs.Rename(fs.JoinPath(path, "info.json.hidden"), fs.JoinPath(path, "info.json"))
+    object info = app.info
+    array authors = info.authors
 
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+            break
+        )
+    )
+
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    string screenshotsPath = fs.JoinPath("./apps", appname, "screenshots")
+    if !fs.Exists(screenshotsPath) (
+        fs.Mkdir(screenshotsPath)
+    )
+
+    string path = fs.JoinPath(screenshotsPath, screenshot)
+
+    if fs.Exists(path) (
+        c.JSON(400, { ok: false, error: "screenshot already exists" })
+        return
+    )
+
+    file := c.FormFile("file").toArray()
+    if file[2] != null (
+        c.JSON(400, { ok: false, error: "invalid file" })
+        return
+    )
+
+    c.SaveUploadedFile(file[1].assert("*multipart.FileHeader"), path)
+
+    c.JSON(200, { ok: true })
+)
+
+def handleAppScreenshotDelete(*gin.Context c) (
+    string appname = c.Param("appname")
+    string screenshot = c.Param("screenshot")
+
+    string username = c.MustGet("username").toStr().toLower()
+
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+
+    object info = app.info
+    array authors = info.authors
+
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+            break
+        )
+    )
+
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    string path = fs.JoinPath("./apps", appname, "screenshots", screenshot)
+
+    if !fs.Exists(path) (
+        c.JSON(400, { ok: false, error: "screenshot does not exist" })
+        return
+    )
+
+    fs.Remove(path)
+
+    c.JSON(200, { ok: true })
+)
+
+def handleHideApp(*gin.Context c) (
+    string appname = c.Param("appname")
+    string username = c.MustGet("username").toStr()
+    
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+
+    string path = fs.JoinPath("./apps", appname)
+    object info = app.info
+    array authors = info.authors
+
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            fs.Rename(fs.JoinPath(path, "info.json"), fs.JoinPath(path, "info.json.hidden"))
+
+            c.JSON(200, { ok: true })
+            return
+        )
+    )
+
+    c.JSON(401, { ok: false, error: "not authorized" })
+)
+
+def handleShowApp(*gin.Context c) (
+    string appname = c.Param("appname")
+    string username = c.MustGet("username").toStr()
+
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+
+    string path = fs.JoinPath("./apps", appname)
+    object info = app.info
+    array authors = info.authors
+
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            fs.Rename(fs.JoinPath(path, "info.json.hidden"), fs.JoinPath(path, "info.json"))
+
+            c.JSON(200, { ok: true })
+            return
+        )
+    )
+
+    c.JSON(401, { ok: false, error: "not authorized" })
+)
+
+def handleAppFileList(*gin.Context c) (
+    string appname = c.Param("appname")
+    string relPath = c.DefaultQuery("path", "")
+
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+
+    string dir = fs.JoinPath("./apps", appname, relPath)
+    if !fs.Exists(dir) (
+        c.JSON(400, { ok: false, error: "invalid path" })
+        return
+    )
+
+    array entries = fs.ReadDir(dir)
+    array files = []
+    array dirs = []
+    for i entries.len (
+        string f = entries[i]
+        if f.startsWith(".") (
+            continue
+        )
+        string full = fs.JoinPath(dir, f)
+        if fs.IsDir(full) (
+            void dirs.append(f)
+        ) else (
+            void files.append(f)
+        )
+    )
+
+    c.JSON(200, { ok: true, path: relPath, dirs: dirs, files: files })
+)
+
+def handleAppFileGet(*gin.Context c) (
+    string appname = c.Param("appname")
+    string file = c.Query("file")
+    string relPath = c.DefaultQuery("path", "")
+    if file == "" (
+        c.JSON(400, { ok: false, error: "missing file param" })
+        return
+    )
+
+    string path = fs.JoinPath("./apps", appname, relPath, file)
+    boolean exists = fs.Exists(path)
+    if !exists (
+        c.JSON(404, { ok: false, error: "file not found" })
+        return
+    )
+
+    c.File(path)
+)
+
+def handleAppFileSave(*gin.Context c) (
+    string appname = c.Param("appname")
+    string file = c.Query("file")
+    string relPath = c.DefaultQuery("path", "")
+    if file == "" (
+        c.JSON(400, { ok: false, error: "missing file param" })
+        return
+    )
+
+    string username = c.MustGet("username").toStr().toLower()
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+    array authors = app.info.authors
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+            break
+        )
+    )
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    string data = c.Request.Body.toStr()
+    string dir = fs.JoinPath("./apps", appname, relPath)
+    if !fs.Exists(dir) (
+        fs.MkdirAll(dir)
+    )
+    string path = fs.JoinPath(dir, file)
+    fs.WriteFile(path, data)
+    c.JSON(200, { ok: true })
+)
+
+def handleAppFileDelete(*gin.Context c) (
+    string appname = c.Param("appname")
+    string file = c.Query("file")
+    string relPath = c.DefaultQuery("path", "")
+    if file == "" (
+        c.JSON(400, { ok: false, error: "missing file param" })
+        return
+    )
+
+    string username = c.MustGet("username").toStr().toLower()
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+    array authors = app.info.authors
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+            break
+        )
+    )
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    string path = fs.JoinPath("./apps", appname, relPath, file)
+    if !fs.Exists(path) (
+        c.JSON(404, { ok: false, error: "file not found" })
+        return
+    )
+    fs.Remove(path)
+    c.JSON(200, { ok: true })
+)
+
+def handleAppDirCreate(*gin.Context c) (
+    string appname = c.Param("appname")
+    string relPath = c.DefaultQuery("path", "")
+    string dirName = c.DefaultQuery("name", "")
+
+    if dirName == "" (
+        c.JSON(400, { ok: false, error: "missing dir name" })
+        return
+    )
+
+    string username = c.MustGet("username").toStr().toLower()
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+    array authors = app.info.authors
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+            break
+        )
+    )
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    string dirPath = fs.JoinPath("./apps", appname, relPath, dirName)
+    if fs.Exists(dirPath) (
+        c.JSON(400, { ok: false, error: "directory already exists" })
+        return
+    )
+    fs.MkdirAll(dirPath)
+    c.JSON(200, { ok: true })
+)
+
+def handleAppDirDelete(*gin.Context c) (
+    string appname = c.Param("appname")
+    string relPath = c.DefaultQuery("path", "")
+
+    if relPath == "" (
+        c.JSON(400, { ok: false, error: "missing path" })
+        return
+    )
+
+    string username = c.MustGet("username").toStr().toLower()
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+    array authors = app.info.authors
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+            break
+        )
+    )
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    string dirPath = fs.JoinPath("./apps", appname, relPath)
+    if !fs.Exists(dirPath) (
+        c.JSON(404, { ok: false, error: "directory not found" })
+        return
+    )
+    if !fs.IsDir(dirPath) (
+        c.JSON(400, { ok: false, error: "not a directory" })
+        return
+    )
+    fs.Remove(dirPath)
     c.JSON(200, { ok: true })
 )

@@ -1,0 +1,497 @@
+<link rel="stylesheet" href="../static/css/appinfo.css">
+<script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
+
+<div class="app-info-view">
+  <!-- Header -->
+  <div class="app-header">
+    <div class="header-info">
+      <h1 id="title-display">{{ .App.title }}</h1>
+      <p class="app-version">Version <span id="version-display">{{ .App.version }}</span></p>
+    </div>
+    <div class="spacer"></div>
+    <div class="header-actions">
+      {{ if eq .App.hidden true }}
+      <button class="btn-secondary" onclick="show()"><i data-lucide="eye"></i>Show</button>
+      {{ else }}
+      <button class="btn-secondary" onclick="hide()"><i data-lucide="eye-off"></i>Hide</button>
+      {{ end }}
+      <button id="edit-code-btn" class="btn-primary"><i data-lucide="code"></i>Edit Code</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="app-stats">
+    <div class="stat-card">
+      <i data-lucide="eye"></i>
+      <div>
+        <div class="stat-value">{{ .App.views }}</div>
+        <div class="stat-label">Views</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <i data-lucide="download"></i>
+      <div>
+        <div class="stat-value">{{ .App.downloads }}</div>
+        <div class="stat-label">Downloads</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-grid">
+    <!-- Description -->
+    <div class="info-card">
+      <div class="card-header">
+        <h3>Description</h3>
+        <button class="edit-btn" onclick="editField('description')"><i data-lucide="edit-2"></i></button>
+      </div>
+      <div class="card-content">
+        <p id="description-display">{{ .App.description }}</p>
+        <textarea id="description-edit" class="edit-textarea" style="display: none;">{{ .App.description }}</textarea>
+      </div>
+    </div>
+
+    <!-- Details -->
+    <div class="info-card">
+      <div class="card-header">
+        <h3>Details</h3>
+      </div>
+      <div class="card-content details-grid">
+        <!-- Genre -->
+        <div class="detail-item">
+          <label>Genre</label>
+          <div class="detail-value">
+            <span id="genre-display">{{ .App.genre }}</span>
+            <button class="inline-edit-btn" onclick="editInline('genre')"><i data-lucide="edit-2"></i></button>
+          </div>
+          <input id="genre-edit" type="text" value="{{ .App.genre }}" style="display: none;">
+        </div>
+
+        <!-- Version -->
+        <div class="detail-item">
+          <label>Version</label>
+          <div class="detail-value">
+            <span id="version-detail-display">{{ .App.version }}</span>
+            <button class="inline-edit-btn" onclick="editInline('version')"><i data-lucide="edit-2"></i></button>
+          </div>
+          <input id="version-edit" type="text" value="{{ .App.version }}" style="display: none;">
+        </div>
+
+        <!-- Authors -->
+        <div class="detail-item">
+          <label>Authors</label>
+          <div class="detail-value">
+            <div id="authors-display" class="tag-list">
+              {{ range .App.authors }}<span class="tag">{{ . }}</span>{{ end }}
+            </div>
+            <button class="inline-edit-btn" onclick="editInline('authors')"><i data-lucide="edit-2"></i></button>
+          </div>
+          <input id="authors-edit" type="text" value="{{ range .App.authors }}{{ . }},{{ end }}" style="display: none;">
+        </div>
+
+        <!-- Game Modes -->
+        <div class="detail-item">
+          <label>Game Modes</label>
+          <div class="detail-value">
+            <div id="game_modes-display" class="tag-list">
+              {{ range .App.game_modes }}<span class="tag">{{ . }}</span>{{ end }}
+            </div>
+            <button class="inline-edit-btn" onclick="editInline('game_modes')"><i data-lucide="edit-2"></i></button>
+          </div>
+          <input id="game_modes-edit" type="text" value="{{ range .App.game_modes }}{{ . }},{{ end }}"
+            style="display: none;">
+        </div>
+
+        <!-- Permissions -->
+        <div class="detail-item">
+          <label>Permissions</label>
+          <div class="detail-value">
+            <div id="permissions-display" class="tag-list">
+              {{ range .App.permissions }}<span class="tag tag-warning">{{ . }}</span>{{ end }}
+            </div>
+            <button class="inline-edit-btn" onclick="editInline('permissions')"><i data-lucide="edit-2"></i></button>
+          </div>
+          <input id="permissions-edit" type="text" value="{{ range .App.permissions }}{{ . }},{{ end }}"
+            style="display: none;">
+        </div>
+
+        <div class="card-footer">
+          <button id="save-details-btn" class="btn-primary" onclick="saveDetails()" style="display: none;">
+            <i data-lucide="save"></i>Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Browser -->
+  <div class="info-card">
+    <div class="card-header">
+      <h3>Files</h3>
+      <button class="btn-secondary" onclick="openAddFileModal()"><i data-lucide="plus"></i>Add File</button>
+    </div>
+    <div class="card-content">
+      <ul id="file-list" class="file-list"></ul>
+    </div>
+  </div>
+
+  <!-- Screenshots -->
+  <div class="info-card">
+    <div class="card-header">
+      <h3>Screenshots</h3>
+    </div>
+    <div class="card-content">
+      <div class="screenshot-grid">
+        {{ range .App.screenshots }}
+        <div class="screenshot-item">
+          <div class="screenshot-overlay">
+            <button class="screenshot-delete-btn" onclick="deleteScreenshot('{{ . }}')">
+              <i data-lucide="trash-2"></i>
+            </button>
+          </div>
+          <img src="/apps/screenshots/{{ $.App.title }}/{{ . }}" class="screenshot" />
+        </div>
+        {{ end }}
+        <button class="screenshot-add" onclick="document.getElementById('screenshot-upload').click()">
+          <i data-lucide="plus"></i>
+          <span>Add Screenshot</span>
+        </button>
+        <input type="file" id="screenshot-upload" accept="image/*" style="display: none;"
+          onchange="uploadScreenshot(this)">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Single Editor Overlay -->
+<div id="editor-overlay">
+  <div class="editor-header">
+    <h3 id="editor-title">Edit</h3>
+    <div class="editor-actions">
+      <button id="close-editor" class="btn-secondary"><i data-lucide="x"></i>Close</button>
+      <button id="save-editor" class="btn-primary" onclick="saveEditorContent()"><i data-lucide="save"></i>Save</button>
+    </div>
+  </div>
+  <div id="editor-container"></div>
+</div>
+
+<script>
+  console.log({{ .App }});
+
+  let appData = {
+    title: "{{ .App.title }}",
+    version: "{{ .App.version }}",
+    description: "{{ .App.description }}",
+    genre: "{{ .App.genre }}",
+    authors: "{{ range $i, $el := .App.authors }}{{ if $i }},{{ end }}{{$el}}{{ end }}".split(','),
+    game_modes: "{{ range $i, $el := .App.game_modes }}{{ if $i }},{{ end }}{{$el}}{{ end }}".split(','),
+    permissions: "{{ range $i, $el := .App.permissions }}{{ if $i }},{{ end }}{{$el}}{{ end }}".split(','),
+    supports: "{{ range $i, $el := .App.supports }}{{ if $i }},{{ end }}{{$el}}{{ end }}".split(',')
+  };
+
+  let editingFields = new Set();
+
+  // Single Monaco Editor Instance
+  let monacoEditor = null;
+  let currentEditorContext = {
+    mode: '', // 'osl' or 'file'
+    fileName: '',
+    path: ''
+  };
+
+  function editField(field) {
+    const display = document.getElementById(`${field}-display`);
+    const edit = document.getElementById(`${field}-edit`);
+
+    if (display && edit) {
+      display.style.display = 'none';
+      edit.style.display = 'block';
+      edit.focus();
+      editingFields.add(field);
+      showSaveButton();
+    }
+  }
+
+  function editInline(field) {
+    const display = document.getElementById(`${field}-display`);
+    const edit = document.getElementById(`${field}-edit`);
+
+    if (display && edit) {
+      display.style.display = 'none';
+      edit.style.display = 'block';
+      edit.focus();
+      editingFields.add(field);
+      showSaveButton();
+    }
+
+    if (field === 'version') {
+      document.getElementById('version-detail-display').style.display = 'none';
+    }
+  }
+
+  function showSaveButton() {
+    const saveBtn = document.getElementById('save-details-btn');
+    if (saveBtn) {
+      saveBtn.style.display = 'flex';
+    }
+  }
+
+  async function saveDetails() {
+    const updates = {};
+
+    if (editingFields.has('description')) {
+      updates.description = document.getElementById('description-edit').value;
+    }
+
+    if (editingFields.has('genre')) {
+      updates.genre = document.getElementById('genre-edit').value;
+    }
+
+    if (editingFields.has('version')) {
+      updates.version = document.getElementById('version-edit').value;
+    }
+
+    if (editingFields.has('authors')) {
+      const value = document.getElementById('authors-edit').value;
+      updates.authors = value.split(',').map(s => s.trim()).filter(s => s);
+    }
+
+    if (editingFields.has('game_modes')) {
+      const value = document.getElementById('game_modes-edit').value;
+      updates.game_modes = value.split(',').map(s => s.trim()).filter(s => s);
+    }
+
+    if (editingFields.has('permissions')) {
+      const value = document.getElementById('permissions-edit').value;
+      updates.permissions = value.split(',').map(s => s.trim()).filter(s => s);
+    }
+
+    if (editingFields.has('supports')) {
+      const value = document.getElementById('supports-edit').value;
+      updates.supports = value.split(',').map(s => s.trim()).filter(s => s);
+    }
+
+    await fetch("/api/apps/update/" + appData.title, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates)
+    });
+
+    window.location.reload();
+  }
+
+  // Initialize Monaco Editor (Single Instance)
+  require.config({ paths: { vs: "https://unpkg.com/monaco-editor@latest/min/vs" } });
+  require(["vs/editor/editor.main"], function () {
+    monaco.languages.json.jsonDefaults.diagnosticsOptions = {
+      validate: false
+    };
+
+    monacoEditor = monaco.editor.create(document.getElementById("editor-container"), {
+      value: "",
+      language: "plaintext",
+      theme: "vs-dark",
+      automaticLayout: true,
+    });
+  });
+
+  // Function to get language from file extension
+  function getLanguageFromFilename(filename) {
+    if (!filename) return 'plaintext';
+    const ext = filename.split('.').pop().toLowerCase();
+    const languageMap = {
+      'js': 'javascript',
+      'ts': 'typescript',
+      'json': 'json',
+      'html': 'html',
+      'css': 'css',
+      'py': 'python',
+      'java': 'java',
+      'cpp': 'cpp',
+      'c': 'c',
+      'h': 'c',
+      'cs': 'csharp',
+      'php': 'php',
+      'rb': 'ruby',
+      'go': 'go',
+      'rs': 'rust',
+      'md': 'markdown',
+      'xml': 'xml',
+      'yaml': 'yaml',
+      'yml': 'yaml',
+      'sql': 'sql',
+      'sh': 'shell',
+      'txt': 'plaintext'
+    };
+    return languageMap[ext] || 'plaintext';
+  }
+
+  function openEditor(title, content, mode, fileName = '', path = '') {
+    if (!monacoEditor) {
+      console.error('Monaco editor not initialized');
+      return;
+    }
+
+    currentEditorContext = { mode, fileName, path };
+
+    document.getElementById('editor-title').innerText = title;
+
+    let language = 'plaintext';
+    if (mode === 'osl' || fileName.endsWith('.osl')) {
+      language = 'c';
+    } else if (fileName) {
+      language = getLanguageFromFilename(fileName);
+    }
+
+    const model = monacoEditor.getModel();
+    monaco.editor.setModelLanguage(model, language);
+    monacoEditor.setValue(content);
+
+    document.getElementById('editor-overlay').classList.add('active');
+  }
+
+  document.getElementById('close-editor').onclick = function () {
+    document.getElementById('editor-overlay').classList.remove('active');
+  };
+
+  async function saveEditorContent() {
+    if (!monacoEditor) return;
+
+    const content = monacoEditor.getValue();
+    const { mode, fileName, path } = currentEditorContext;
+
+    if (mode === 'osl') {
+      await fetch(`/api/apps/upload/${appData.title}/osl`, {
+        method: "POST",
+        body: content
+      });
+    } else if (mode === 'file') {
+      let finalFileName = fileName;
+      if (!finalFileName) {
+        finalFileName = prompt("Enter file name (with extension)");
+        if (!finalFileName) return;
+      }
+
+      let url = `/api/apps/file/${appData.title}?file=${encodeURIComponent(finalFileName)}`;
+      if (path) url += `&path=${encodeURIComponent(path)}`;
+
+      await fetch(url, {
+        method: "POST",
+        body: content
+      });
+
+      loadFileList(path);
+    }
+
+    document.getElementById('editor-overlay').classList.remove('active');
+  }
+
+  document.getElementById('edit-code-btn').onclick = async function () {
+    const content = await fetch(`/apps/download/${appData.title}/osl`).then(r => r.text());
+    openEditor('Edit Source Code (OSL)', content, 'osl');
+  };
+
+  let currentPath = "";
+
+  async function loadFileList(path = currentPath) {
+    currentPath = path;
+    const res = await fetch(`/api/apps/files/${appData.title}?path=${encodeURIComponent(path)}`);
+    const json = await res.json();
+    if (!json.ok) return;
+
+    const list = document.getElementById("file-list");
+    if (!list) return;
+    list.innerHTML = "";
+
+    if (currentPath) {
+      const backLi = document.createElement("li");
+      backLi.className = "file-item dir";
+      backLi.innerHTML = `<div class='file-name'><i data-lucide="arrow-left"></i><span>..</span></div>`;
+      backLi.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const idx = currentPath.lastIndexOf("/");
+        loadFileList(idx === -1 ? "" : currentPath.slice(0, idx));
+      };
+      list.appendChild(backLi);
+    }
+
+    json.dirs.forEach(dir => {
+      const li = document.createElement("li");
+      li.className = "file-item dir";
+      li.innerHTML = `<div class='file-name'><i data-lucide="folder"></i><span>${dir}</span></div>`;
+      li.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        loadFileList(currentPath ? `${currentPath}/${dir}` : dir);
+      };
+      list.appendChild(li);
+    });
+
+    json.files.forEach(f => {
+      const isOsl = f.toLowerCase().endsWith('.osl');
+      const fileIcon = isOsl ? 'code' : 'file';
+      const fileClass = isOsl ? 'file-item osl-file' : 'file-item';
+
+      const li = document.createElement("li");
+      li.className = fileClass;
+      li.innerHTML = `
+      <div class='file-name'><i data-lucide="${fileIcon}"></i><span>${f}</span>${isOsl ? '<span class="osl-badge">OSL</span>' : ''}</div>
+      <div class='file-actions'>
+        <button class='icon-btn' onclick="event.stopPropagation(); editFile('${f}')"><i data-lucide='pencil'></i></button>
+        <button class='icon-btn' onclick="event.stopPropagation(); deleteFile('${f}')"><i data-lucide='trash-2'></i></button>
+      </div>`;
+      list.appendChild(li);
+    });
+
+    lucide.createIcons();
+  }
+
+  function openAddFileModal() {
+    openEditor('New File', '', 'file', '', currentPath);
+  }
+
+  async function editFile(name) {
+    const url = `/api/apps/file/${appData.title}?file=${encodeURIComponent(name)}&path=${encodeURIComponent(currentPath)}`;
+    const content = await fetch(url).then(r => r.text());
+    openEditor(`Edit: ${name}`, content, 'file', name, currentPath);
+  }
+
+  async function deleteFile(name) {
+    if (!confirm(`Delete ${name}?`)) return;
+    let url = `/api/apps/file/${appData.title}?file=${encodeURIComponent(name)}`;
+    if (currentPath) url += `&path=${encodeURIComponent(currentPath)}`;
+    await fetch(url, { method: "DELETE" });
+    loadFileList();
+  }
+
+  async function hide() {
+    await fetch("/api/apps/hide/" + appData.title, {
+      method: "POST",
+    }).then(() => window.location.reload());
+  }
+
+  async function show() {
+    await fetch("/api/apps/show/" + appData.title, {
+      method: "POST",
+    }).then(() => window.location.reload());
+  }
+
+  async function uploadScreenshot(file) {
+    const formData = new FormData();
+    formData.append("file", file.files[0]);
+    await fetch("/api/apps/screenshot/" + appData.title + "/" + file.files[0].name, {
+      method: "POST",
+      body: formData,
+    }).then(() => window.location.reload());
+  }
+
+  async function deleteScreenshot(screenshot) {
+    await fetch("/api/apps/screenshot/" + appData.title + "/" + screenshot, {
+      method: "DELETE",
+    }).then(() => window.location.reload());
+  }
+
+  document.addEventListener("DOMContentLoaded", () => loadFileList());
+
+</script>

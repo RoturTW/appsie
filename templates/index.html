@@ -1,11 +1,40 @@
 <html>
   <head>
     <link rel="stylesheet" href="../static/css/global.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
   </head>
   <body>
     {{ template "sidebar.html" . }}
-    <h1>
-      {{ .title }}
-    </h1>
+    <div id="content-wrapper">
+      {{ template "header.html" . }}
+      <div id="content-container">
+
+        {{ if eq .Page "dashboard" }}
+          {{ template "_dashboard.html" . }}
+
+        {{ else if eq .Page "apps" }}
+          {{ template "_apps.html" . }}
+
+        {{ else if eq .Page "appinfo" }}
+          {{ template "_appinfo.html" . }}
+        
+        {{ else if eq .Page "promote" }}
+          {{ template "_promote.html" . }}
+
+        {{ else if eq .Page "analytics" }}
+          {{ template "_analytics.html" . }}
+
+        {{ else if eq .Page "create" }}
+          {{ template "_create.html" . }}
+
+        {{ else if eq .Page "publish" }}
+          {{ template "_publish.html" . }}
+        {{ end }}
+
+      </div>
+    </div>
+    <script>
+      lucide.createIcons({ icons: lucide.icons });
+    </script>
   </body>
 </html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Developer Dashboard</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../static/css/global2.css">
+  </head>
+  <body>
+    <div id="sidebar">
+      {{range .Apps}}
+      <a class="app-item" href="">
+        <p>{{ .title }}</p>
+      </a>
+      {{end}}
+    </div>
+    <script src="" async defer></script>
+  </body>
+</html>

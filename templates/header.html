@@ -1,0 +1,11 @@
+<div id="header">
+  <p class="title">
+    {{ .PageName }}
+  </p>
+
+  <!-- profile options? -->
+  <a id="user" onclick="fetch('/api/logout').then(r => r.json()).then(() => window.location.reload())">
+    <img src="https://avatars.rotur.dev/{{ .Main.Username }}">
+    <p>{{ .Main.Username }}</p>
+  </a>
+</div>

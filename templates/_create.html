@@ -1,0 +1,28 @@
+<link rel="stylesheet" href="../static/css/appinfo.css">
+
+<div id="page-wrapper">
+  <h1 class="title">Create New App</h1>
+  <div style="display:flex;gap:16px;flex-direction:column;width:400px;margin-top:24px;">
+    <input id="app-name" placeholder="App Name" style="padding:12px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text);">
+    <button class="btn-primary" id="create-btn"><i data-lucide="plus"></i>Create</button>
+    <p id="create-status"></p>
+  </div>
+</div>
+
+<script>
+
+document.getElementById('create-btn').onclick = async () => {
+  const name = document.getElementById('app-name').value.trim();
+  if(!name) { alert('Enter a name'); return; }
+  const res = await fetch(`/api/apps/create?appname=${encodeURIComponent(name)}`, { method:'POST' });
+  const json = await res.json();
+  const status = document.getElementById('create-status');
+  if(json.ok) {
+    status.textContent = 'Created!';
+    window.location.href = `/app/${name}`;
+  } else {
+    status.textContent = json.error;
+    status.style.color = 'red';
+  }
+};
+</script>

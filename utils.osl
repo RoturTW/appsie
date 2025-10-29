@@ -14,14 +14,18 @@ def getAppInfo(string appname) object (
     boolean exists = fs.Exists(infoPath)
 
     if !exists (
-        return {
-            ok: false,
-            error: "app not found",
-        }
+        infoPath = fs.JoinPath(path, "info.json.hidden")
+        exists = fs.Exists(infoPath)
+        if !exists (
+            return {
+                ok: false,
+                error: "app not found",
+            }
+        )
     )
 
-
     object info = fs.ReadFile(infoPath).JsonParse()
+    info.hidden = infoPath.endsWith(".hidden")
 
     string iconPath = fs.JoinPath(path, "icon.icn")
     boolean iconExists = fs.Exists(iconPath)
@@ -57,6 +61,19 @@ def getAppInfo(string appname) object (
             }
         )
         fileNames[i] = fileName
+        if fileName === "changelogs" and isDir (
+            array changelogs = fs.ReadDir(fs.JoinPath(path, fileName))
+            info.changelogs = []
+            for k changelogs.len (
+                string cl = changelogs[k]
+                if cl.startsWith(".") (
+                    continue
+                )
+                array list = info.changelogs
+                list = list.append(cl)
+                info.changelogs = list
+            )
+        )
         if fileName === "screenshots" and isDir (
             array screenshots = fs.ReadDir(fs.JoinPath(path, fileName))
             info.screenshots = []
@@ -74,6 +91,10 @@ def getAppInfo(string appname) object (
 
     info.author = info.authors.join(", ")
 
+    object stats = fs.ReadFile("./stats.json").JsonParse()
+    info.downloads = stats.downloads[appname.toLower()]
+    info.views = stats.views[appname.toLower()]
+
     return {
         ok: true,
         info: info,
@@ -84,12 +105,12 @@ def randomString(int length) string (
     string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     string result = ""
     for i length (
-        result = result + chars[rand.Intn(chars.len) + 1].toStr()
+        result = result ++ chars[rand.Intn(chars.len) + 1].toStr()
     )
     return result
 )
 
-def getAllApps() object (
+def getAllApps(boolean showHidden) object (
     string path = "./apps"
     boolean exists = fs.Exists(path)
 
@@ -110,12 +131,51 @@ def getAllApps() object (
         )
         object info = getAppInfo(fileName)
         if info.ok == true (
-            apps[fileName] = info.info
+            object app = info.info
+            if app.hidden == false or showHidden == true (
+                apps[fileName] = app
+            )
         )
     )
 
     return {
         ok: true,
         apps: apps,
+    }
+)
+
+def getAppsByDev(string dev) array (
+    object resp = getAllApps(true)
+    if !resp.ok (
+        return []
+    )
+
+    object apps = resp.apps
+    array appNames = apps.getKeys()
+    
+    array myApps = []
+    for i appNames.len (
+        object app = apps[appNames[i]]
+        if app["authors"].contains(dev) (
+            void myApps.append(app)
+        )
+    )
+    return myApps
+)
+
+def getAppFile(string appname, string filetype) object (
+    string path = fs.JoinPath("./apps", appname, "script." ++ filetype.toLower())
+    boolean exists = fs.Exists(path)
+
+    if !exists (
+        return {
+            ok: false,
+            error: "app not found",
+        }
+    )
+
+    return {
+        ok: true,
+        data: fs.ReadFile(path),
     }
 )

@@ -1,0 +1,21 @@
+<div id="page-wrapper">
+  <h1 class="title">Overview</h1>
+  <div id="stats" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;">
+    <div class="stat-card rounded shadow">
+      <p class="title">Total Apps</p>
+      <p>{{ .Stats.NumApps }}</p>
+    </div>
+    <div class="stat-card rounded shadow">
+      <p class="title">Total Downloads</p>
+      <p>{{ .Stats.TotalDownloads }}</p>
+    </div>
+    <div class="stat-card rounded shadow">
+      <p class="title">Total Views</p>
+      <p>{{ .Stats.TotalViews }}</p>
+    </div>
+    <div class="stat-card rounded shadow">
+      <p class="title">Hidden Apps</p>
+      <p>{{ .Stats.HiddenApps }}</p>
+    </div>
+  </div>
+</div>

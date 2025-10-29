@@ -1,35 +1,166 @@
 array buttons = [
     {
-        Name: "Analytics",
-        Src: "../static/assets/icons/analytics.svg",
+        Name: "Dashboard",
+        Src: "bar-chart",
+        Link: "/",
     },
     {
         Name: "My Apps",
-        Src: "../static/assets/icons/apps.svg",
+        Src: "list",
+        Link: "/apps",
     },
     {
-        Name: "Promote",
-        Src: "../static/assets/icons/promote.svg",
-    },
-    {
-        Name: "Help",
-        Src: "../static/assets/icons/help.svg",
+        Name: "Create App",
+        Src: "plus",
+        Link: "/create",
     },
 ]
 
-def homePage(*gin.Context c) (
-    string username = "Mist"
-
+def mainObject(*gin.Context c) object (
+    string username = c.MustGet("username").toStr()
     array send_buttons = buttons.clone()
+    return {
+        Username: username,
+        Buttons: send_buttons,
+    }
+)
 
-    void send_buttons.prepend({
-        Name: "My Profile",
-        Src: "https://avatars.rotur.dev/" ++ username,
-    })
+def homePage(*gin.Context c) (
+
+    object main = mainObject(c)
+
+    array apps = getAppsByDev(main.Username.toStr())
+
+    int numApps = apps.len
+    int totalDownloads = 0
+    int totalViews = 0
+    int hiddenApps = 0
+
+    for i apps.len (
+        object app = apps[i]
+        if app.hidden == true (
+            hiddenApps = hiddenApps + 1
+        )
+        if app.downloads != null (
+            totalDownloads = totalDownloads + app.downloads.toInt()
+        )
+        if app.views != null (
+            totalViews = totalViews + app.views.toInt()
+        )
+    )
+
+    object stats = {
+        NumApps: numApps,
+        TotalDownloads: totalDownloads,
+        TotalViews: totalViews,
+        HiddenApps: hiddenApps,
+    }
 
     c.HTML(200, "index.html", {
-        title: "Hello, World!",
-        username,
-        Buttons: send_buttons,
+        Page: "dashboard",
+        PageName: "Dashboard",
+        Main: main,
+        Stats: stats,
+        Apps: apps,
     })
+)
+
+def appsPage(*gin.Context c) (
+
+    object main = mainObject(c)
+    array apps = getAppsByDev(main.Username.toStr())
+
+    c.HTML(200, "index.html", {
+        Page: "apps",
+        PageName: "My Apps",
+        Main: main,
+        Apps: apps
+    })
+)
+
+def appsInfoPage(*gin.Context c) (
+
+    object main = mainObject(c)
+    string appname = c.Param("appname")
+    object app = getAppInfo(appname)
+
+    object file = getAppFile(appname, "osl")
+    if file.ok == true (
+        app.info.code = file.data.toStr()
+    )
+
+    c.HTML(200, "index.html", {
+        Page: "appinfo",
+        PageName: appname,
+        Main: main,
+        App: app.info
+    })
+)
+
+def promotePage(*gin.Context c) (
+
+    object main = mainObject(c)
+
+    c.HTML(200, "index.html", {
+        Page: "promote",
+        PageName: "Promote",
+        Main: main
+    })
+)
+
+def analyticsPage(*gin.Context c) (
+
+    object main = mainObject(c)
+    string appname = c.Param("appname")
+
+    object appResp = getAppInfo(appname)
+    if appResp.ok == false (
+        c.HTML(404, "index.html", {
+            Page: "dashboard",
+            PageName: "Not found",
+            Main: main,
+        })
+        return
+    )
+    object app = appResp.info
+    object stats = {
+        Downloads: app.downloads,
+        Views: app.views,
+        Hidden: app.hidden,
+        Version: app.version,
+    }
+
+    c.HTML(200, "index.html", {
+        Page: "analytics",
+        PageName: "Analytics - " ++ appname,
+        Main: main,
+        Stats: stats,
+        App: app,
+    })
+)
+
+def createAppPage(*gin.Context c) (
+
+    object main = mainObject(c)
+
+    c.HTML(200, "index.html", {
+        Page: "create",
+        PageName: "Create App",
+        Main: main,
+    })
+)
+
+def publishPage(*gin.Context c) (
+
+    object main = mainObject(c)
+
+    c.HTML(200, "index.html", {
+        Page: "publish",
+        PageName: "Publish",
+        Main: main
+    })
+)
+
+def authPage(*gin.Context c) (
+    c.HTML(200, "auth.html", {})
 )

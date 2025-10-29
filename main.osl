@@ -2,6 +2,7 @@ import "osl/fs"
 import "osl/requests"
 
 import "math/rand"
+import "mime/multipart"
 import "github.com/gin-gonic/gin"
 
 import "./api.osl"
@@ -10,6 +11,7 @@ import "./utils.osl"
 import "./pages.osl"
 import "./apps.osl"
 import "./middleware.osl"
+import "./changelog.osl"
 
 string port = "8080"
 
@@ -23,24 +25,51 @@ def main() (
     r := gin.Default()
 
     r.LoadHTMLGlob("templates/*")
-    r.GET("/", homePage)
+    r.GET("/", requireSession, homePage)
+    r.GET("/apps", requireSession, appsPage)
+
+    r.GET("/app/:appname", requireSession, appsInfoPage)
+    r.GET("/analytics/:appname", requireSession, analyticsPage)
+
+    r.GET("/promote", requireSession, promotePage)
+    r.GET("/publish", requireSession, publishPage)
+    r.GET("/create", requireSession, createAppPage)
     r.Static("/static", "./static")
+    r.GET("/auth", authPage)
 
     api := r.Group("/api")
     api.GET("/up", up)
     api.GET("/auth", handleDevAuth)
+    api.GET("/logout", requireSession, handleLogout)
     api.GET("/apps", requireSession, handleMyApps)
     // manage apps
     api.POST("/apps/create", requireSession, handleCreateApp)
-    api.PUT("/apps/:appname", requireSession, handleUpdateApp)
+    api.POST("/apps/update/:appname", requireSession, handleUpdateApp)
+    api.POST("/apps/info/:appname", requireSession, updateAppInfo)
     // show and hide apps from the app store
-    api.POST("/apps/show", requireSession, handleShowApp)
-    api.POST("/apps/hide", requireSession, handleHideApp)
+    api.POST("/apps/show/:appname", requireSession, handleShowApp)
+    api.POST("/apps/hide/:appname", requireSession, handleHideApp)
+    // upload and manage files
+    api.POST("/apps/upload/:appname/:filetype", requireSession, handleAppUpload)
+    api.DELETE("/apps/upload/:appname/:filetype", requireSession, handleAppDelete)
+    // manage screenshots
+    api.POST("/apps/screenshot/:appname/:screenshot", requireSession, handleAppScreenshotUpload)
+    api.DELETE("/apps/screenshot/:appname/:screenshot", requireSession, handleAppScreenshotDelete)
+    
+    // file browser operations
+    api.GET("/apps/files/:appname", requireSession, handleAppFileList)
+    api.GET("/apps/file/:appname", requireSession, handleAppFileGet)
+    api.POST("/apps/file/:appname", requireSession, handleAppFileSave)
+    api.DELETE("/apps/file/:appname", requireSession, handleAppFileDelete)
+    // directory operations
+    api.POST("/apps/dir/:appname", requireSession, handleAppDirCreate)
+    api.DELETE("/apps/dir/:appname", requireSession, handleAppDirDelete)
 
     apps := r.Group("/apps")
     apps.GET("/info/:appname", handleAppInfo)
     apps.GET("/icon/:appname", handleAppIcon)
     apps.GET("/download/:appname/:filetype", handleAppFile)
+    apps.GET("/screenshots/:appname/:screenshot", handleAppScreenshot)
     apps.GET("/all", handleAllApps)
 
     r.Run(":" ++ port)

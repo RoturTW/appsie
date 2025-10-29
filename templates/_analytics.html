@@ -1,0 +1,9 @@
+<div id="page-wrapper">
+  <h1 class="title">Analytics - {{ .App.title }}</h1>
+  <div id="stats" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;">
+    <div class="stat-card rounded shadow"><p class="title">Downloads</p><p>{{ .Stats.Downloads }}</p></div>
+    <div class="stat-card rounded shadow"><p class="title">Views</p><p>{{ .Stats.Views }}</p></div>
+    <div class="stat-card rounded shadow"><p class="title">Hidden</p><p>{{ .Stats.Hidden }}</p></div>
+    <div class="stat-card rounded shadow"><p class="title">Version</p><p>{{ .Stats.Version }}</p></div>
+  </div>
+</div>

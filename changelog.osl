@@ -1,0 +1,150 @@
+// changelog.osl
+
+def handleAppChangelogUpload(*gin.Context c) (
+    string appname = c.Param("appname")
+    string changelog = c.Param("changelog")
+
+    string username = c.MustGet("username").toStr().toLower()
+
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+
+    object info = app.info
+    array authors = info.authors
+
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+            break
+        )
+    )
+
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    string changelogsPath = fs.JoinPath("./apps", appname, "changelogs")
+    if !fs.Exists(changelogsPath) (
+        fs.Mkdir(changelogsPath)
+    )
+
+    string path = fs.JoinPath(changelogsPath, changelog)
+
+    boolean replace = c.Query("replace") == "true"
+    if fs.Exists(path) and !replace (
+        c.JSON(400, { ok: false, error: "changelog already exists" })
+        return
+    )
+
+    file := c.FormFile("file").toArray()
+    if file[2] != null (
+        c.JSON(400, { ok: false, error: "invalid file" })
+        return
+    )
+
+    c.SaveUploadedFile(file[1].assert("*multipart.FileHeader"), path)
+
+    c.JSON(200, { ok: true })
+)
+
+
+def handleAppChangelogDelete(*gin.Context c) (
+    string appname = c.Param("appname")
+    string changelog = c.Param("changelog")
+
+    string username = c.MustGet("username").toStr().toLower()
+
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+
+    object info = app.info
+    array authors = info.authors
+
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+            break
+        )
+    )
+
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    string path = fs.JoinPath("./apps", appname, "changelogs", changelog)
+
+    if !fs.Exists(path) (
+        c.JSON(400, { ok: false, error: "changelog does not exist" })
+        return
+    )
+
+    fs.Remove(path)
+
+    c.JSON(200, { ok: true })
+)
+
+def handleAppChangelogRename(*gin.Context c) (
+    string appname = c.Param("appname")
+
+    string oldName = c.Query("old")
+    string newName = c.Query("new")
+
+    if oldName == "" or newName == "" (
+        c.JSON(400, { ok: false, error: "missing parameters" })
+        return
+    )
+
+    string username = c.MustGet("username").toStr().toLower()
+
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(404, { ok: false, error: "app not found" })
+        return
+    )
+
+    object info = app.info
+    array authors = info.authors
+
+    boolean allowed = false
+    for i authors.len (
+        string author = authors[i].toStr().toLower()
+        if author == username (
+            allowed = true
+            break
+        )
+    )
+
+    if !allowed (
+        c.JSON(401, { ok: false, error: "not authorized" })
+        return
+    )
+
+    string base = fs.JoinPath("./apps", appname, "changelogs")
+    string oldPath = fs.JoinPath(base, oldName)
+    string newPath = fs.JoinPath(base, newName)
+
+    if !fs.Exists(oldPath) (
+        c.JSON(404, { ok: false, error: "old changelog not found" })
+        return
+    )
+    if fs.Exists(newPath) (
+        c.JSON(400, { ok: false, error: "new changelog already exists" })
+        return
+    )
+
+    fs.Rename(oldPath, newPath)
+
+    c.JSON(200, { ok: true })
+)

@@ -1,6 +1,20 @@
 
 def handleAppInfo(*gin.Context c) (
-    c.JSON(200, getAppInfo(c.Param("appname")))
+
+    string appname = c.Param("appname")
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(404, app)
+        return
+    )
+
+    object stats = fs.ReadFile("./stats.json").JsonParse()
+    object views = stats.views
+    views[appname] = views[appname].toNum() + 1
+    stats.views = views
+    fs.WriteFile("./stats.json", stats.JsonFormat())
+
+    c.JSON(200, app)
 )
 
 def handleAppIcon(*gin.Context c) (
@@ -22,9 +36,33 @@ def handleAppFile(*gin.Context c) (
         return
     )
 
+    object stats = fs.ReadFile("./stats.json").JsonParse()
+    object downloads = stats.downloads
+    downloads[appname] = downloads[appname].toNum() + 1
+    stats.downloads = downloads
+    fs.WriteFile("./stats.json", stats.JsonFormat())
+
     c.File(path)
 )
 
 def handleAllApps(*gin.Context c) (
-    c.JSON(200, getAllApps())
+    c.JSON(200, getAllApps(false))
+)
+
+def handleAppScreenshot(*gin.Context c) (
+    string appname = c.Param("appname")
+    string screenshot = c.Param("screenshot")
+
+    string path = fs.JoinPath("./apps", appname, "screenshots", screenshot)
+    boolean exists = fs.Exists(path)
+
+    if !exists (
+        c.JSON(404, {
+            ok: false,
+            error: "app not found",
+        })
+        return
+    )
+
+    c.File(path)
 )
