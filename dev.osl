@@ -57,6 +57,32 @@ def handleCreateApp(*gin.Context c) (
         c.JSON(400, { ok: false, error: "app already exists" })
         return
     )
+
+    adminToken := os.Getenv("ADMIN_TOKEN")
+    if adminToken == "" (
+        c.JSON(400, { ok: false, error: "missing admin token" })
+        return
+    )
+
+    // charge for creating apps
+    resp := requests.Post("https://api.rotur.dev/admin/transfer_credits?amount=9&from=" ++ username ++ "&to=rotur", {
+        authorization: adminToken,
+    })
+    if resp.success == false (
+        c.JSON(400, { ok: false, error: "failed to transfer credits" })
+        return
+    )
+    string body = resp.body.toStr()
+    object data = body.JsonParse()
+    if typeof(data) !== "object" (
+        c.JSON(400, { ok: false, error: "invalid response body" })
+        return
+    )
+    if data.error != null (
+        c.JSON(400, { ok: false, error: data.error })
+        return
+    )
+
     fs.CopyDir(fs.JoinPath("./apps", ".template"), fs.JoinPath("./apps", appname))
 
     object info = fs.ReadFile(fs.JoinPath(path, "info.json")).JsonParse()
@@ -66,6 +92,39 @@ def handleCreateApp(*gin.Context c) (
     info.authors = authors
     fs.WriteFile(fs.JoinPath(path, "info.json"), info.JsonFormat())
     c.JSON(200, { ok: true })
+)
+
+def handleDeleteApp(*gin.Context c) (
+    string appname = c.Param("appname")
+    string username = c.MustGet("username")
+    if appname == "" (
+        c.JSON(400, { ok: false, error: "missing appname" })
+        return
+    )
+    string path = fs.JoinPath("./apps", appname)
+    if !fs.Exists(path) (
+        c.JSON(400, { ok: false, error: "app does not exist" })
+        return
+    )
+
+    object app = getAppInfo(appname)
+    if app.ok == false (
+        c.JSON(404, { ok: false, error: "app not found" })
+        return
+    )
+
+    array authors = app.info.authors
+
+    for i authors.len (
+        string author = authors[i]
+        if author == username (
+            fs.Remove(path)
+            c.JSON(200, { ok: true })
+            return
+        )
+    )
+
+    c.JSON(401, { ok: false, error: "not authorized" })
 )
 
 def handleUpdateApp(*gin.Context c) (
@@ -85,7 +144,7 @@ def handleUpdateApp(*gin.Context c) (
         return
     )
     
-    string infoPath = fs.JoinPath(path, "info.json")
+    string infoPath = fs.JoinPath(path, "info.json.hidden")
 
     object info = fs.ReadFile(infoPath).JsonParse()
     
@@ -107,7 +166,7 @@ def handleUpdateApp(*gin.Context c) (
 // this api is for updating keys in the info.json file
 def updateAppInfo(*gin.Context c) (
     string appname = c.Param("appname")
-    string username = c.MustGet("username").toStr()
+    string username = c.MustGet("username")
 
     object app = getAppInfo(appname)
 
@@ -129,7 +188,7 @@ def updateAppInfo(*gin.Context c) (
 
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
         )
@@ -182,7 +241,7 @@ def handleAppScreenshotUpload(*gin.Context c) (
     string appname = c.Param("appname")
     string screenshot = c.Param("screenshot")
 
-    string username = c.MustGet("username").toStr().toLower()
+    string username = c.MustGet("username")
 
     object app = getAppInfo(appname)
     if app.ok == false (
@@ -195,7 +254,7 @@ def handleAppScreenshotUpload(*gin.Context c) (
 
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
             break
@@ -234,7 +293,7 @@ def handleAppScreenshotDelete(*gin.Context c) (
     string appname = c.Param("appname")
     string screenshot = c.Param("screenshot")
 
-    string username = c.MustGet("username").toStr().toLower()
+    string username = c.MustGet("username")
 
     object app = getAppInfo(appname)
     if app.ok == false (
@@ -247,7 +306,7 @@ def handleAppScreenshotDelete(*gin.Context c) (
 
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
             break
@@ -273,7 +332,7 @@ def handleAppScreenshotDelete(*gin.Context c) (
 
 def handleHideApp(*gin.Context c) (
     string appname = c.Param("appname")
-    string username = c.MustGet("username").toStr()
+    string username = c.MustGet("username")
     
     object app = getAppInfo(appname)
     if app.ok == false (
@@ -286,7 +345,7 @@ def handleHideApp(*gin.Context c) (
     array authors = info.authors
 
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             fs.Rename(fs.JoinPath(path, "info.json"), fs.JoinPath(path, "info.json.hidden"))
 
@@ -300,7 +359,7 @@ def handleHideApp(*gin.Context c) (
 
 def handleShowApp(*gin.Context c) (
     string appname = c.Param("appname")
-    string username = c.MustGet("username").toStr()
+    string username = c.MustGet("username")
 
     object app = getAppInfo(appname)
     if app.ok == false (
@@ -313,7 +372,7 @@ def handleShowApp(*gin.Context c) (
     array authors = info.authors
 
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             fs.Rename(fs.JoinPath(path, "info.json.hidden"), fs.JoinPath(path, "info.json"))
 
@@ -388,7 +447,7 @@ def handleAppFileSave(*gin.Context c) (
         return
     )
 
-    string username = c.MustGet("username").toStr().toLower()
+    string username = c.MustGet("username")
     object app = getAppInfo(appname)
     if app.ok == false (
         c.JSON(400, { ok: false, error: "app does not exist" })
@@ -397,7 +456,7 @@ def handleAppFileSave(*gin.Context c) (
     array authors = app.info.authors
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
             break
@@ -427,7 +486,7 @@ def handleAppFileDelete(*gin.Context c) (
         return
     )
 
-    string username = c.MustGet("username").toStr().toLower()
+    string username = c.MustGet("username")
     object app = getAppInfo(appname)
     if app.ok == false (
         c.JSON(400, { ok: false, error: "app does not exist" })
@@ -436,7 +495,7 @@ def handleAppFileDelete(*gin.Context c) (
     array authors = app.info.authors
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
             break
@@ -466,7 +525,7 @@ def handleAppDirCreate(*gin.Context c) (
         return
     )
 
-    string username = c.MustGet("username").toStr().toLower()
+    string username = c.MustGet("username")
     object app = getAppInfo(appname)
     if app.ok == false (
         c.JSON(400, { ok: false, error: "app does not exist" })
@@ -475,7 +534,7 @@ def handleAppDirCreate(*gin.Context c) (
     array authors = app.info.authors
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
             break
@@ -504,7 +563,7 @@ def handleAppDirDelete(*gin.Context c) (
         return
     )
 
-    string username = c.MustGet("username").toStr().toLower()
+    string username = c.MustGet("username")
     object app = getAppInfo(appname)
     if app.ok == false (
         c.JSON(400, { ok: false, error: "app does not exist" })
@@ -513,7 +572,7 @@ def handleAppDirDelete(*gin.Context c) (
     array authors = app.info.authors
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
             break

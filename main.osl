@@ -3,7 +3,9 @@ import "osl/requests"
 
 import "math/rand"
 import "mime/multipart"
+import "os"
 import "github.com/gin-gonic/gin"
+import "github.com/joho/godotenv as gotdotenv"
 
 import "./api.osl"
 import "./dev.osl"
@@ -21,6 +23,8 @@ object fileTypes = loadConfig("filetypes.json")
 object sessions = {}
 
 def main() (
+
+    gotdotenv.Load()
 
     r := gin.Default()
 
@@ -42,8 +46,10 @@ def main() (
     api.GET("/auth", handleDevAuth)
     api.GET("/logout", requireSession, handleLogout)
     api.GET("/apps", requireSession, handleMyApps)
+    api.GET("/featured", handleFeatured)
     // manage apps
     api.POST("/apps/create", requireSession, handleCreateApp)
+    api.DELETE("/apps/delete/:appname", requireSession, handleDeleteApp)
     api.POST("/apps/update/:appname", requireSession, handleUpdateApp)
     api.POST("/apps/info/:appname", requireSession, updateAppInfo)
     // show and hide apps from the app store

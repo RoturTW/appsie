@@ -92,8 +92,8 @@ def getAppInfo(string appname) object (
     info.author = info.authors.join(", ")
 
     object stats = fs.ReadFile("./stats.json").JsonParse()
-    info.downloads = stats.downloads[appname.toLower()]
-    info.views = stats.views[appname.toLower()]
+    info.downloads = stats.downloads[appname.toLower()].toNum()
+    info.views = stats.views[appname.toLower()].toNum()
 
     return {
         ok: true,

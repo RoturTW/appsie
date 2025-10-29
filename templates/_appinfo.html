@@ -10,6 +10,7 @@
     </div>
     <div class="spacer"></div>
     <div class="header-actions">
+      <button class="btn-secondary" onclick="deleteApp()"><i data-lucide="trash-2"></i>Delete</button>
       {{ if eq .App.hidden true }}
       <button class="btn-secondary" onclick="show()"><i data-lucide="eye"></i>Show</button>
       {{ else }}
@@ -113,6 +114,16 @@
           </div>
           <input id="permissions-edit" type="text" value="{{ range .App.permissions }}{{ . }},{{ end }}"
             style="display: none;">
+        </div>
+
+        <!-- Price -->
+        <div class="detail-item">
+          <label>Price</label>
+          <div class="detail-value">
+            <span id="price-display">{{ .App.price }} Credits</span>
+            <button class="inline-edit-btn" onclick="editInline('price')"><i data-lucide="edit-2"></i></button>
+          </div>
+          <input id="price-edit" type="text" value="{{ .App.price }}" style="display: none;">
         </div>
 
         <div class="card-footer">
@@ -475,6 +486,13 @@
     await fetch("/api/apps/show/" + appData.title, {
       method: "POST",
     }).then(() => window.location.reload());
+  }
+
+  async function deleteApp() {
+    if (!confirm("Are you sure you want to delete this app? It will be permanently removed from the app store.")) return;
+    await fetch("/api/apps/delete/" + appData.title, {
+      method: "DELETE",
+    }).then(() => window.location.href = "/apps");
   }
 
   async function uploadScreenshot(file) {

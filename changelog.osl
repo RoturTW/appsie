@@ -4,7 +4,7 @@ def handleAppChangelogUpload(*gin.Context c) (
     string appname = c.Param("appname")
     string changelog = c.Param("changelog")
 
-    string username = c.MustGet("username").toStr().toLower()
+    string username = c.MustGet("username")
 
     object app = getAppInfo(appname)
     if app.ok == false (
@@ -17,7 +17,7 @@ def handleAppChangelogUpload(*gin.Context c) (
 
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
             break
@@ -58,7 +58,7 @@ def handleAppChangelogDelete(*gin.Context c) (
     string appname = c.Param("appname")
     string changelog = c.Param("changelog")
 
-    string username = c.MustGet("username").toStr().toLower()
+    string username = c.MustGet("username")
 
     object app = getAppInfo(appname)
     if app.ok == false (
@@ -71,7 +71,7 @@ def handleAppChangelogDelete(*gin.Context c) (
 
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
             break
@@ -106,7 +106,7 @@ def handleAppChangelogRename(*gin.Context c) (
         return
     )
 
-    string username = c.MustGet("username").toStr().toLower()
+    string username = c.MustGet("username")
 
     object app = getAppInfo(appname)
     if app.ok == false (
@@ -119,7 +119,7 @@ def handleAppChangelogRename(*gin.Context c) (
 
     boolean allowed = false
     for i authors.len (
-        string author = authors[i].toStr().toLower()
+        string author = authors[i]
         if author == username (
             allowed = true
             break

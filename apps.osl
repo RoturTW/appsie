@@ -24,16 +24,37 @@ def handleAppIcon(*gin.Context c) (
 def handleAppFile(*gin.Context c) (
     string appname = c.Param("appname")
     string fileType = c.Param("filetype")
+    string token = c.Query("auth")
 
     string path = fs.JoinPath("./apps", appname, "script." ++ fileType.toLower())
     boolean exists = fs.Exists(path)
 
-    if !exists (
+    app := getAppInfo(appname)
+    if !exists or app.ok == false (
         c.JSON(404, {
             ok: false,
             error: "app not found",
         })
         return
+    )
+
+    info := app.info
+    if info.price != null and info.price > 0 (
+        if token == "" (
+            c.JSON(401, { ok: false, error: "missing auth token" })
+            return
+        )
+        object resp = requests.Post("https://api.rotur.dev/me/transfer?auth=" ++ token, {
+            body: {
+                amount: info.price,
+                to: info.authors[1],
+                note: "App store: " ++ info.title ++ " purchase",
+            }
+        })
+        if resp.success == false (
+            c.JSON(400, { ok: false, error: "failed to transfer" })
+            return
+        )
     )
 
     object stats = fs.ReadFile("./stats.json").JsonParse()
@@ -65,4 +86,18 @@ def handleAppScreenshot(*gin.Context c) (
     )
 
     c.File(path)
+)
+
+def handleFeatured(*gin.Context c) (
+
+    object featured = loadConfig("featured.json")
+    if featured.featured == null (
+        c.JSON(404, {
+            ok: false,
+            error: "featured app not found",
+        })
+        return
+    )
+
+    c.JSON(200, featured)
 )
