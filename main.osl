@@ -27,9 +27,9 @@ def main() (
     gotdotenv.Load()
 
     port = os.Getenv("APPSIE_PORT")
-    if port == "" {
+    if port == "" (
         port = "5612"
-    }
+    )
 
     r := gin.Default()
 
