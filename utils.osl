@@ -99,6 +99,14 @@ def getAppInfo(string appname) object (
     info.downloads = stats.downloads[appname.toLower()].toNum()
     info.views = stats.views[appname.toLower()].toNum()
 
+    object ownerships = readOwnerships()
+    array owners = ownerships[appname.toLower()]
+    if owners == null (
+        info.owners = 0
+    ) else (
+        info.owners = owners.len
+    )
+
     return {
         ok: true,
         info: info,
@@ -202,4 +210,20 @@ def readApprovals() object (
 
 def writeApprovals(object approvals) (
     fs.WriteFile(fs.JoinPath("./config", "approvals.json"), approvals.JsonFormat())
+)
+
+def readOwnerships() object (
+    string path = fs.JoinPath("./config", "ownership.json")
+    if !fs.Exists(path) (
+        fs.WriteFile(path, "{}")
+    )
+    object data = fs.ReadFile(path).JsonParse()
+    if typeof(data) !== "object" (
+        return {}
+    )
+    return data
+)
+
+def writeOwnerships(object ownerships) (
+    fs.WriteFile(fs.JoinPath("./config", "ownership.json"), ownerships.JsonFormat())
 )

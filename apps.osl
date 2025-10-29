@@ -39,7 +39,26 @@ def handleAppFile(*gin.Context c) (
     )
 
     info := app.info
-    if info.price != null and info.price > 0 (
+
+    string username = ""
+    if token != "" (
+        array parts = token.split(",")
+        if parts.len >= 2 (
+            username = parts[2].toStr().toLower()
+        )
+    )
+
+    object ownerships = readOwnerships()
+    array owners = ownerships[appname]
+    if owners == null (
+        owners = []
+    )
+    boolean alreadyOwns = false
+    if username != "" (
+        alreadyOwns = owners.contains(username)
+    )
+
+    if info.price != null and info.price > 0 and alreadyOwns == false (
         if token == "" (
             c.JSON(401, { ok: false, error: "missing auth token" })
             return
@@ -57,6 +76,12 @@ def handleAppFile(*gin.Context c) (
         )
     )
 
+    if username != "" and alreadyOwns == false (
+        void owners.append(username)
+        ownerships[appname] = owners
+        writeOwnerships(ownerships)
+    )
+
     object stats = fs.ReadFile("./stats.json").JsonParse()
     object downloads = stats.downloads
     downloads[appname] = downloads[appname].toNum() + 1
@@ -67,7 +92,35 @@ def handleAppFile(*gin.Context c) (
 )
 
 def handleAllApps(*gin.Context c) (
-    c.JSON(200, getAllApps(false))
+    string token = c.Query("auth")
+    string username = ""
+    if token != "" (
+        array parts = token.split(",")
+        if parts.len >= 2 (
+            username = parts[2].toStr().toLower()
+        )
+    )
+
+    object resp = getAllApps(false)
+    if resp.ok == false (
+        c.JSON(500, resp)
+        return
+    )
+
+    if username != "" (
+        object ownerships = readOwnerships()
+        object apps = resp.apps
+        array names = apps.getKeys()
+        for i names.len (
+            string n = names[i]
+            array owners = ownerships[n]
+            boolean owns = owners != null and owners.contains(username)
+            apps[n].owns = owns
+        )
+        resp.apps = apps
+    )
+
+    c.JSON(200, resp)
 )
 
 def handleAppScreenshot(*gin.Context c) (

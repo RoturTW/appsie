@@ -36,6 +36,13 @@
         <div class="stat-label">Downloads</div>
       </div>
     </div>
+    <div class="stat-card">
+      <i data-lucide="user"></i>
+      <div>
+        <div class="stat-value">{{ .App.owners }}</div>
+        <div class="stat-label">Owners</div>
+      </div>
+    </div>
   </div>
 
   <!-- Main Content -->
@@ -187,8 +194,6 @@
 </div>
 
 <script>
-  console.log({{ .App }});
-
   let appData = {
     title: "{{ .App.title }}",
     version: "{{ .App.version }}",
