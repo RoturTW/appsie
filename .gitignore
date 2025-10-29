@@ -3,3 +3,4 @@ apps
 .DS_Store
 .env
 *.json
+main
