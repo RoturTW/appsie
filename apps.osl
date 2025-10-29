@@ -9,8 +9,9 @@ def handleAppInfo(*gin.Context c) (
     )
 
     object stats = fs.ReadFile("./stats.json").JsonParse()
+    string lowAppname = appname.toLower()
     object views = stats.views
-    views[appname] = views[appname].toNum() + 1
+    views[lowAppname] = views[lowAppname].toNum() + 1
     stats.views = views
     fs.WriteFile("./stats.json", stats.JsonFormat())
 
@@ -58,8 +59,9 @@ def handleAppFile(*gin.Context c) (
     )
 
     object stats = fs.ReadFile("./stats.json").JsonParse()
+    string lowAppname = appname.toLower()
     object downloads = stats.downloads
-    downloads[appname] = downloads[appname].toNum() + 1
+    downloads[lowAppname] = downloads[lowAppname].toNum() + 1
     stats.downloads = downloads
     fs.WriteFile("./stats.json", stats.JsonFormat())
 
