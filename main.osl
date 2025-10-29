@@ -33,6 +33,8 @@ def main() (
 
     r := gin.Default()
 
+    gin.SetMode("release")
+
     r.LoadHTMLGlob("templates/*")
     r.GET("/", requireSession, homePage)
     r.GET("/apps", requireSession, appsPage)
