@@ -52,7 +52,7 @@ def handleCreateApp(*gin.Context c) (
         c.JSON(400, { ok: false, error: "missing appname" })
         return
     )
-    string path = fs.JoinPath("./apps", appname)
+    string path = fs.JoinPath("./apps", appname.toLower())
     if fs.Exists(path) (
         c.JSON(400, { ok: false, error: "app already exists" })
         return
@@ -83,14 +83,14 @@ def handleCreateApp(*gin.Context c) (
         return
     )
 
-    fs.CopyDir(fs.JoinPath("./apps", ".template"), fs.JoinPath("./apps", appname))
+    fs.CopyDir(fs.JoinPath("./apps", ".template"), fs.JoinPath("./apps", appname.toLower()))
 
-    object info = fs.ReadFile(fs.JoinPath(path, "info.json")).JsonParse()
+    object info = fs.ReadFile(fs.JoinPath(path, "info.json.hidden")).JsonParse()
     info.title = appname
     array authors = info.authors
     authors.append(username)
     info.authors = authors
-    fs.WriteFile(fs.JoinPath(path, "info.json"), info.JsonFormat())
+    fs.WriteFile(fs.JoinPath(path, "info.json.hidden"), info.JsonFormat())
     c.JSON(200, { ok: true })
 )
 
