@@ -156,8 +156,12 @@ def getAppsByDev(string dev) array (
     array myApps = []
     for i appNames.len (
         object app = apps[appNames[i]]
-        if app["authors"].contains(dev) (
-            void myApps.append(app)
+        array authors = app.authors
+        for j authors.len (
+            string author = authors[j]
+            if author == dev (
+                void myApps.append(app)
+            )
         )
     )
     return myApps
