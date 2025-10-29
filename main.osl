@@ -22,6 +22,17 @@ object fileTypes = loadConfig("filetypes.json")
 
 object sessions = {}
 
+def noCORS(*gin.Context c) (
+    c.Header("Access-Control-Allow-Origin", "*")
+    c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+    c.Header("Access-Control-Allow-Headers", "*")
+    if c.Request.Method == "OPTIONS" (
+        c.AbortWithStatus(204)
+        return
+    )
+    c.Next()
+)
+
 def main() (
 
     gotdotenv.Load()
@@ -53,7 +64,6 @@ def main() (
     api.GET("/auth", handleDevAuth)
     api.GET("/logout", requireSession, handleLogout)
     api.GET("/apps", requireSession, handleMyApps)
-    api.GET("/featured", handleFeatured)
     // manage apps
     api.POST("/apps/create", requireSession, handleCreateApp)
     api.DELETE("/apps/delete/:appname", requireSession, handleDeleteApp)
@@ -79,11 +89,13 @@ def main() (
     api.DELETE("/apps/dir/:appname", requireSession, handleAppDirDelete)
 
     apps := r.Group("/apps")
+    apps.Use(noCORS)
     apps.GET("/info/:appname", handleAppInfo)
     apps.GET("/icon/:appname", handleAppIcon)
     apps.GET("/download/:appname/:filetype", handleAppFile)
     apps.GET("/screenshots/:appname/:screenshot", handleAppScreenshot)
     apps.GET("/all", handleAllApps)
+    apps.GET("/featured", handleFeatured)
 
     r.Run(":" ++ port)
 )
