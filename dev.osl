@@ -95,7 +95,7 @@ def handleCreateApp(*gin.Context c) (
 )
 
 def handleDeleteApp(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string username = c.MustGet("username")
     if appname == "" (
         c.JSON(400, { ok: false, error: "missing appname" })
@@ -128,7 +128,7 @@ def handleDeleteApp(*gin.Context c) (
 )
 
 def handleUpdateApp(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string version = c.Query("version")
     if version == "" (
         c.JSON(400, { ok: false, error: "missing version" })
@@ -165,7 +165,7 @@ def handleUpdateApp(*gin.Context c) (
 
 // this api is for updating keys in the info.json file
 def updateAppInfo(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string username = c.MustGet("username")
 
     object app = getAppInfo(appname)
@@ -218,7 +218,7 @@ def updateAppInfo(*gin.Context c) (
 
 
 def handleAppUpload(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string filetype = c.Param("filetype")
 
     string path = fs.JoinPath("./apps", appname, "script." ++ filetype.toLower())
@@ -227,7 +227,7 @@ def handleAppUpload(*gin.Context c) (
 )
 
 def handleAppDelete(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string filetype = c.Param("filetype")
 
     string path = fs.JoinPath("./apps", appname, "script." ++ filetype.toLower())
@@ -238,7 +238,7 @@ def handleAppDelete(*gin.Context c) (
 )
 
 def handleAppScreenshotUpload(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string screenshot = c.Param("screenshot")
 
     string username = c.MustGet("username")
@@ -290,7 +290,7 @@ def handleAppScreenshotUpload(*gin.Context c) (
 )
 
 def handleAppScreenshotDelete(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string screenshot = c.Param("screenshot")
 
     string username = c.MustGet("username")
@@ -331,7 +331,7 @@ def handleAppScreenshotDelete(*gin.Context c) (
 )
 
 def handleHideApp(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string username = c.MustGet("username")
     
     object app = getAppInfo(appname)
@@ -358,7 +358,7 @@ def handleHideApp(*gin.Context c) (
 )
 
 def handleShowApp(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string username = c.MustGet("username")
 
     object app = getAppInfo(appname)
@@ -391,7 +391,7 @@ def handleShowApp(*gin.Context c) (
 )
 
 def handleAppFileList(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string relPath = c.DefaultQuery("path", "")
 
     object app = getAppInfo(appname)
@@ -426,7 +426,7 @@ def handleAppFileList(*gin.Context c) (
 )
 
 def handleAppFileGet(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string file = c.Query("file")
     string relPath = c.DefaultQuery("path", "")
     if file == "" (
@@ -445,7 +445,7 @@ def handleAppFileGet(*gin.Context c) (
 )
 
 def handleAppFileSave(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string file = c.Query("file")
     string relPath = c.DefaultQuery("path", "")
     if file == "" (
@@ -484,7 +484,7 @@ def handleAppFileSave(*gin.Context c) (
 )
 
 def handleAppFileDelete(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string file = c.Query("file")
     string relPath = c.DefaultQuery("path", "")
     if file == "" (
@@ -528,7 +528,7 @@ def handleAppFileDelete(*gin.Context c) (
 )
 
 def handleAppDirCreate(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string relPath = c.DefaultQuery("path", "")
     string dirName = c.DefaultQuery("name", "")
 
@@ -567,7 +567,7 @@ def handleAppDirCreate(*gin.Context c) (
 )
 
 def handleAppDirDelete(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string relPath = c.DefaultQuery("path", "")
 
     if relPath == "" (

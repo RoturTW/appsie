@@ -88,7 +88,7 @@ def appsPage(*gin.Context c) (
 def appsInfoPage(*gin.Context c) (
 
     object main = mainObject(c)
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     object app = getAppInfo(appname)
 
     object file = getAppFile(appname, "osl")
@@ -118,7 +118,7 @@ def promotePage(*gin.Context c) (
 def analyticsPage(*gin.Context c) (
 
     object main = mainObject(c)
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
 
     object appResp = getAppInfo(appname)
     if appResp.ok == false (

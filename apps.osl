@@ -1,7 +1,7 @@
 
 def handleAppInfo(*gin.Context c) (
 
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     object app = getAppInfo(appname)
     if app.ok == false (
         c.JSON(404, app)
@@ -9,9 +9,8 @@ def handleAppInfo(*gin.Context c) (
     )
 
     object stats = fs.ReadFile("./stats.json").JsonParse()
-    string lowAppname = appname.toLower()
     object views = stats.views
-    views[lowAppname] = views[lowAppname].toNum() + 1
+    views[appname] = views[appname].toNum() + 1
     stats.views = views
     fs.WriteFile("./stats.json", stats.JsonFormat())
 
@@ -19,11 +18,11 @@ def handleAppInfo(*gin.Context c) (
 )
 
 def handleAppIcon(*gin.Context c) (
-    c.File(fs.JoinPath("./apps", c.Param("appname"), "icon.icn"))
+    c.File(fs.JoinPath("./apps", c.Param("appname").toLower(), "icon.icn"))
 )
 
 def handleAppFile(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string fileType = c.Param("filetype")
     string token = c.Query("auth")
 
@@ -59,9 +58,8 @@ def handleAppFile(*gin.Context c) (
     )
 
     object stats = fs.ReadFile("./stats.json").JsonParse()
-    string lowAppname = appname.toLower()
     object downloads = stats.downloads
-    downloads[lowAppname] = downloads[lowAppname].toNum() + 1
+    downloads[appname] = downloads[appname].toNum() + 1
     stats.downloads = downloads
     fs.WriteFile("./stats.json", stats.JsonFormat())
 
@@ -73,7 +71,7 @@ def handleAllApps(*gin.Context c) (
 )
 
 def handleAppScreenshot(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string screenshot = c.Param("screenshot")
 
     string path = fs.JoinPath("./apps", appname, "screenshots", screenshot)

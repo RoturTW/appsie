@@ -1,7 +1,7 @@
 // changelog.osl
 
 def handleAppChangelogUpload(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string changelog = c.Param("changelog")
 
     string username = c.MustGet("username")
@@ -55,7 +55,7 @@ def handleAppChangelogUpload(*gin.Context c) (
 
 
 def handleAppChangelogDelete(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
     string changelog = c.Param("changelog")
 
     string username = c.MustGet("username")
@@ -96,7 +96,7 @@ def handleAppChangelogDelete(*gin.Context c) (
 )
 
 def handleAppChangelogRename(*gin.Context c) (
-    string appname = c.Param("appname")
+    string appname = c.Param("appname").toLower()
 
     string oldName = c.Query("old")
     string newName = c.Query("new")
