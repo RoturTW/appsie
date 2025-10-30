@@ -42,20 +42,24 @@ def handleAppFile(*gin.Context c) (
 
     string username = ""
     if token != "" (
-        array parts = token.split(",")
-        if parts.len >= 2 (
-            username = parts[2].toStr().toLower()
+        object resp = requests.Get("https://api.rotur.dev/me?auth=" ++ token)
+        if resp.success == false (
+            c.JSON(401, { ok: false, error: "failed to get user info" })
+            return
         )
+        object user = resp.body.toStr().JsonParse()
+        username = user.username
     )
 
     object ownerships = readOwnerships()
-    array owners = ownerships[appname]
-    if owners == null (
-        owners = []
+    rawOwners := ownerships[appname]
+    if rawOwners == null (
+        rawOwners = []
     )
+    array owners = rawOwners
     boolean alreadyOwns = false
     if username != "" (
-        alreadyOwns = owners.contains(username)
+        alreadyOwns = owners.contains(username.toLower())
     )
 
     if info.price != null and info.price > 0 and alreadyOwns == false (
@@ -77,7 +81,7 @@ def handleAppFile(*gin.Context c) (
     )
 
     if username != "" and alreadyOwns == false (
-        void owners.append(username)
+        owners.append(username.toLower())
         ownerships[appname] = owners
         writeOwnerships(ownerships)
     )
