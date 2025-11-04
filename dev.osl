@@ -129,11 +129,6 @@ def handleDeleteApp(*gin.Context c) (
 
 def handleUpdateApp(*gin.Context c) (
     string appname = c.Param("appname").toLower()
-    string version = c.Query("version")
-    if version == "" (
-        c.JSON(400, { ok: false, error: "missing version" })
-        return
-    )
     if appname == "" (
         c.JSON(400, { ok: false, error: "missing appname" })
         return
@@ -144,7 +139,14 @@ def handleUpdateApp(*gin.Context c) (
         return
     )
     
-    string infoPath = fs.JoinPath(path, "info.json.hidden")
+    string infoPath = fs.JoinPath(path, "info.json")
+    if !fs.Exists(infoPath) (
+        infoPath = fs.JoinPath(path, "info.json.hidden")
+        if !fs.Exists(infoPath) (
+            c.JSON(400, { ok: false, error: "app does not exist" })
+            return
+        )
+    )
 
     object info = fs.ReadFile(infoPath).JsonParse()
     
