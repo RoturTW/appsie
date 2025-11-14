@@ -16,7 +16,6 @@
       {{ else }}
       <button class="btn-secondary" onclick="hide()"><i data-lucide="eye-off"></i>Hide</button>
       {{ end }}
-      <button id="edit-code-btn" class="btn-primary"><i data-lucide="code"></i>Edit Code</button>
     </div>
   </div>
 
@@ -401,11 +400,6 @@
 
     document.getElementById('editor-overlay').classList.remove('active');
   }
-
-  document.getElementById('edit-code-btn').onclick = async function () {
-    const content = await fetch(`/apps/download/${appData.title}/osl`).then(r => r.text());
-    openEditor('Edit Source Code (OSL)', content, 'osl');
-  };
 
   let currentPath = "";
 
