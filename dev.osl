@@ -416,6 +416,9 @@ def handleAppFileList(*gin.Context c) (
         if f.startsWith(".") (
             continue
         )
+        if f.startsWith("info.json") (
+            continue
+        )
         string full = fs.JoinPath(dir, f)
         if fs.IsDir(full) (
             void dirs.append(f)
@@ -443,6 +446,11 @@ def handleAppFileGet(*gin.Context c) (
         return
     )
 
+    if file.startsWith("info.json") (
+        c.JSON(400, { ok: false, error: "cannot download info.json" })
+        return
+    )
+
     c.File(path)
 )
 
@@ -452,6 +460,11 @@ def handleAppFileSave(*gin.Context c) (
     string relPath = c.DefaultQuery("path", "")
     if file == "" (
         c.JSON(400, { ok: false, error: "missing file param" })
+        return
+    )
+
+    if file.startsWith("info.json") (
+        c.JSON(400, { ok: false, error: "cannot edit info.json directly" })
         return
     )
 
@@ -491,6 +504,11 @@ def handleAppFileDelete(*gin.Context c) (
     string relPath = c.DefaultQuery("path", "")
     if file == "" (
         c.JSON(400, { ok: false, error: "missing file param" })
+        return
+    )
+
+    if file.startsWith("info.json") (
+        c.JSON(400, { ok: false, error: "cannot delete info.json" })
         return
     )
 
