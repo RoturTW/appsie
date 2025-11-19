@@ -158,3 +158,22 @@ def handleFeatured(*gin.Context c) (
 
     c.JSON(200, featured)
 )
+
+def handleGetAppReviews(*gin.Context c) (
+    string appname = c.Param("appname").toLower()
+
+    c.JSON(200, getReviews(appname))
+)
+
+def handleAppReview(*gin.Context c) (
+    string appname = c.Param("appname").toLower()
+    string username = c.MustGet("username")
+
+    string review = c.Query("content")
+    if review == "" (
+        c.JSON(400, { ok: false, error: "Missing content" })
+    )
+
+    writeReview(appname, username, review)
+    c.JSON(200, { ok: true, error: "Successfully added review" })
+)

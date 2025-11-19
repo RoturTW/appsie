@@ -227,3 +227,25 @@ def readOwnerships() object (
 def writeOwnerships(object ownerships) (
     fs.WriteFile(fs.JoinPath("./config", "ownership.json"), ownerships.JsonFormat())
 )
+
+def getReviews(string appname) array (
+    string reviewPath = fs.JoinPath("./reviews", appname ++ ".json")
+    if !fs.Exists(reviewPath) (
+        return []
+    )
+    array reviews = fs.ReadFile(reviewPath).JsonParse()
+    return reviews
+)
+
+def writeReview(string appname, string by_user, string content) boolean (
+    string reviewPath = fs.JoinPath("./reviews", appname ++ ".json")
+    if !fs.Exists(reviewPath) (
+        fs.WriteFile(reviewPath, "[]")
+    )
+    array reviews = fs.ReadFile(reviewPath).JsonParse()
+    reviews.append({
+        user: by_user,
+        content
+    })
+    return true
+)

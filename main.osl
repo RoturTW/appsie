@@ -106,6 +106,8 @@ def main() (
     apps.GET("/screenshots/:appname/:screenshot", handleAppScreenshot)
     apps.GET("/all", handleAllApps)
     apps.GET("/featured", handleFeatured)
+    apps.GET("/reviews/:appname", handleGetAppReviews)
+    apps.POST("/review/:appname", requireSession, handleAppReview)
 
     r.Run(":" ++ port)
 )
