@@ -26,3 +26,19 @@ def requireAdmin(*gin.Context c) (
     )
     c.Next()
 )
+
+def canAuth(*gin.Context c) (
+    string token = c.Query("auth")
+    string username = ""
+    if token != "" (
+        object resp = requests.Get("https://api.rotur.dev/me?auth=" ++ token)
+        if resp.success == false (
+            c.JSON(401, { ok: false, error: "failed to get user info" })
+            return
+        )
+        object user = resp.body.toStr().JsonParse()
+        username = user.username
+    )
+    c.Set("username", username)
+    c.Next()
+)

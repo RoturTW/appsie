@@ -21,10 +21,27 @@ def handleAppIcon(*gin.Context c) (
     c.File(fs.JoinPath("./apps", c.Param("appname").toLower(), "icon.icn"))
 )
 
+def handleOwnedApps(*gin.Context c) (
+    string username = c.Get("username").toArray()[1].toStr().toLower()
+    if username == "" (
+        c.JSON(401, {"error": "Unauthorized"})
+        return
+    )
+    object ownerships = readOwnerships()
+    array appNames = ownerships.getKeys()
+    array ownedApps = []
+    for i appNames.len (
+        string name = appNames[i]
+        if ownerships[name].contains(username) (
+            ownedApps.append(name)
+        )
+    )
+    c.JSON(200, {"ownedApps": ownedApps})
+)
+
 def handleAppFile(*gin.Context c) (
     string appname = c.Param("appname").toLower()
     string fileType = c.Param("filetype")
-    string token = c.Query("auth")
 
     string path = fs.JoinPath("./apps", appname, "script." ++ fileType.toLower())
     boolean exists = fs.Exists(path)
@@ -40,16 +57,8 @@ def handleAppFile(*gin.Context c) (
 
     info := app.info
 
-    string username = ""
-    if token != "" (
-        object resp = requests.Get("https://api.rotur.dev/me?auth=" ++ token)
-        if resp.success == false (
-            c.JSON(401, { ok: false, error: "failed to get user info" })
-            return
-        )
-        object user = resp.body.toStr().JsonParse()
-        username = user.username
-    )
+    string username = c.MustGet("username").toStr().toLower()
+    string token = c.Query("auth")
 
     object ownerships = readOwnerships()
     rawOwners := ownerships[appname]
@@ -60,6 +69,18 @@ def handleAppFile(*gin.Context c) (
     boolean alreadyOwns = false
     if username != "" (
         alreadyOwns = owners.contains(username.toLower())
+    )
+
+    array authors = info.authors
+    if authors.len == 0 (
+        c.JSON(400, { ok: false, error: "app has no authors" })
+        return
+    )
+    for i authors.len (
+        string author = authors[i]
+        if author == username (
+            alreadyOwns = true
+        )
     )
 
     if info.price != null and info.price > 0 and alreadyOwns == false (
@@ -75,7 +96,7 @@ def handleAppFile(*gin.Context c) (
             }
         })
         if resp.success == false (
-            c.JSON(400, { ok: false, error: "failed to transfer" })
+            c.JSON(400, { ok: false, error: "failed to purchase: " ++ resp.body.toStr().JsonParse().error })
             return
         )
     )

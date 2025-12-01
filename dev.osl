@@ -159,6 +159,7 @@ def handleUpdateApp(*gin.Context c) (
             info[key] = newInfo[key]
         )
     )
+    log keys.JsonStringify() info.JsonFormat() newInfo.JsonFormat()
 
     fs.WriteFile(infoPath, info.JsonFormat())
 

@@ -201,7 +201,8 @@
     authors: "{{ range $i, $el := .App.authors }}{{ if $i }},{{ end }}{{$el}}{{ end }}".split(','),
     game_modes: "{{ range $i, $el := .App.game_modes }}{{ if $i }},{{ end }}{{$el}}{{ end }}".split(','),
     permissions: "{{ range $i, $el := .App.permissions }}{{ if $i }},{{ end }}{{$el}}{{ end }}".split(','),
-    supports: "{{ range $i, $el := .App.supports }}{{ if $i }},{{ end }}{{$el}}{{ end }}".split(',')
+    supports: "{{ range $i, $el := .App.supports }}{{ if $i }},{{ end }}{{$el}}{{ end }}".split(','),
+    price: "{{ .App.price }}",
   };
 
   let editingFields = new Set();
@@ -284,6 +285,10 @@
     if (editingFields.has('supports')) {
       const value = document.getElementById('supports-edit').value;
       updates.supports = value.split(',').map(s => s.trim()).filter(s => s);
+    }
+
+    if (editingFields.has('price')) {
+      updates.price = document.getElementById('price-edit').value;
     }
 
     await fetch("/api/apps/update/" + appData.title, {
