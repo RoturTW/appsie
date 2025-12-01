@@ -88,9 +88,10 @@ def handleAppFile(*gin.Context c) (
             c.JSON(401, { ok: false, error: "missing auth token" })
             return
         )
+        // minus one to account for tax
         object resp = requests.Post("https://api.rotur.dev/me/transfer?auth=" ++ token, {
             body: {
-                amount: info.price,
+                amount: info.price - 1,
                 to: info.authors[1],
                 note: "App store: " ++ info.title ++ " purchase",
             }
