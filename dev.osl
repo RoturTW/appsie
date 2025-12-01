@@ -155,6 +155,9 @@ def handleUpdateApp(*gin.Context c) (
     array keys = newInfo.getKeys()
     for i keys.len (
         string key = keys[i]
+        if key == "authors" or key == "approved" (
+            continue
+        )
         if info.contains(key) (
             info[key] = newInfo[key]
         )
