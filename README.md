@@ -9,6 +9,8 @@ The **Rotur App Store** is a complete backend and frontend system for managing a
 **Appsie** is the core of the Rotur App Store. A lightweight dashboard and API layer that helps developers manage their apps, track analytics, and handle payments.
 It’s designed to be modular and easy to integrate into other app store platforms.
 
+You can access it [here](https://apps.rotur.dev/)
+
 ---
 
 ## Features
