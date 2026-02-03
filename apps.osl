@@ -96,7 +96,7 @@ def handleAppFile(*gin.Context c) (
                 note: "App store: " ++ info.title.toStr() ++ " purchase",
             }
         })
-        if resp.success == false (
+        if resp.success == false or resp.status != 200 (
             c.JSON(400, { ok: false, error: "failed to purchase: " ++ resp.body.toStr().JsonParse().error.toStr() })
             return
         )
