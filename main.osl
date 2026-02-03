@@ -21,7 +21,7 @@ string port = ""
 object systems = loadConfig("systems.json")
 object fileTypes = loadConfig("filetypes.json")
 
-object sessions = {}
+object sessions = loadJson("./sessions.json")
 
 def noCORS(*gin.Context c) (
     c.Header("Access-Control-Allow-Origin", "*")

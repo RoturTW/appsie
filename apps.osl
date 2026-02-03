@@ -93,11 +93,11 @@ def handleAppFile(*gin.Context c) (
             body: {
                 amount: info.price.toNum() - 1,
                 to: info.authors[1],
-                note: "App store: " ++ info.title ++ " purchase",
+                note: "App store: " ++ info.title.toStr() ++ " purchase",
             }
         })
         if resp.success == false (
-            c.JSON(400, { ok: false, error: "failed to purchase: " ++ resp.body.toStr().JsonParse().error })
+            c.JSON(400, { ok: false, error: "failed to purchase: " ++ resp.body.toStr().JsonParse().error.toStr() })
             return
         )
     )

@@ -33,7 +33,6 @@ def mainObject(*gin.Context c) object (
 )
 
 def homePage(*gin.Context c) (
-
     object main = mainObject(c)
 
     array apps = getAppsByDev(main.Username.toStr())
@@ -76,6 +75,7 @@ def appsPage(*gin.Context c) (
 
     object main = mainObject(c)
     array apps = getAppsByDev(main.Username.toStr())
+        .sortBy(app string -> app.title.toStr().toLower())
 
     c.HTML(200, "index.html", {
         Page: "apps",

@@ -6,7 +6,7 @@ def handleDevAuth(*gin.Context c) (
         c.JSON(401, { ok: false, error: "missing token" })
         return
     )
-    object resp = requests.Get("https://api.rotur.dev/validate?key=rotur-app-store&v=" + token)
+    object resp = requests.Get("https://api.rotur.dev/validate?key=rotur-app-store&v=" ++ token)
 
     if !resp.success (
         c.JSON(401, { ok: false, error: "failed to validate token" })
@@ -27,8 +27,9 @@ def handleDevAuth(*gin.Context c) (
     
     string username = token.split(",")[1]
     sessions[sessionId] = username
+    fs.WriteFile("./sessions.json", sessions.JsonFormat())
 
-    c.SetCookie("session_id", sessionId, 3600, "/", "", false, true)
+    c.SetCookie("session_id", sessionId, 604800, "/", "", false, true)
 
     c.JSON(200, { ok: true, token: token })
 )

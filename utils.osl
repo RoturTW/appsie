@@ -8,6 +8,14 @@ def loadConfig(string name) object (
     return value.assert(object)
 )
 
+def loadJson(string path) object (
+    string data = fs.ReadFile(path)
+    if data == "" (
+        return {}
+    )
+    return data.JsonParse().assert(object)
+)
+
 def getAppInfo(string appname) object (
     string path = fs.JoinPath("./apps", appname)
     string infoPath = fs.JoinPath(path, "info.json")
@@ -205,7 +213,7 @@ def readApprovals() object (
     if typeof(data) !== "object" (
         return {}
     )
-    return data
+    return data.assert(object)
 )
 
 def writeApprovals(object approvals) (
