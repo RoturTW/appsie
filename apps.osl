@@ -91,13 +91,17 @@ def handleAppFile(*gin.Context c) (
         // minus one to account for tax
         object resp = requests.Post("https://api.rotur.dev/me/transfer?auth=" ++ token, {
             body: {
-                amount: info.price.toNum() - 1,
+                amount: info.price.toNum(),
                 to: info.authors[1],
                 note: "App store: " ++ info.title.toStr() ++ " purchase",
             }
         })
         if resp.success == false or resp.status != 200 (
-            c.JSON(400, { ok: false, error: "failed to purchase: " ++ resp.body.toStr().JsonParse().error.toStr() })
+            string errorMsg = resp.body.toStr().JsonParse().error.toStr()
+            if errorMsg.contains("insufficient funds") (
+                errorMsg = "insufficient funds"
+            )
+            c.JSON(400, { ok: false, error: "failed to purchase: " ++ errorMsg })
             return
         )
     )
