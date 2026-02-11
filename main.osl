@@ -22,6 +22,7 @@ object systems = loadConfig("systems.json")
 object fileTypes = loadConfig("filetypes.json")
 
 object sessions = loadJson("./sessions.json")
+object userIdToUsername = loadJson("./userids.json")
 
 def noCORS(*gin.Context c) (
     c.Header("Access-Control-Allow-Origin", "*")

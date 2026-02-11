@@ -11,7 +11,10 @@ def requireSession(*gin.Context c) (
         c.Abort()
         return
     )
-    c.Set("username", sessions[sessionId])
+    string userId = sessions[sessionId].toStr()
+    string username = getUsernameFromUserId(userId)
+    c.Set("userId", userId)
+    c.Set("username", username)
     c.Next()
 )
 
@@ -29,6 +32,7 @@ def requireAdmin(*gin.Context c) (
 
 def canAuth(*gin.Context c) (
     string token = c.Query("auth")
+    string userId = ""
     string username = ""
     if token != "" (
         object resp = requests.Get("https://api.rotur.dev/me?auth=" ++ token)
@@ -37,8 +41,11 @@ def canAuth(*gin.Context c) (
             return
         )
         object user = resp.body.toStr().JsonParse()
-        username = user.username
+        username = user.username.toStr()
+        userId = user["sys.id"].toStr()
+        setUserIdFromUsername(username, userId)
     )
+    c.Set("userId", userId)
     c.Set("username", username)
     c.Next()
 )

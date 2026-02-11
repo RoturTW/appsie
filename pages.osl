@@ -18,6 +18,7 @@ array buttons = [
 
 def mainObject(*gin.Context c) object (
     string username = c.MustGet("username").toStr()
+    string userId = c.MustGet("userId").toStr()
     array send_buttons = buttons.clone()
     if ["mist", "flufi", "iris"].contains(username.toLower()) (
         send_buttons.append({
@@ -28,6 +29,7 @@ def mainObject(*gin.Context c) object (
     )
     return {
         Username: username,
+        UserId: userId,
         Buttons: send_buttons,
     }
 )
@@ -35,7 +37,7 @@ def mainObject(*gin.Context c) object (
 def homePage(*gin.Context c) (
     object main = mainObject(c)
 
-    array apps = getAppsByDev(main.Username.toStr())
+    array apps = getAppsByDev(main.UserId.toStr())
 
     int numApps = apps.len
     int totalDownloads = 0
@@ -74,7 +76,7 @@ def homePage(*gin.Context c) (
 def appsPage(*gin.Context c) (
 
     object main = mainObject(c)
-    array apps = getAppsByDev(main.Username.toStr())
+    array apps = getAppsByDev(main.UserId.toStr())
         .sortBy(app string -> app.title.toStr().toLower())
 
     c.HTML(200, "index.html", {
@@ -90,6 +92,9 @@ def appsInfoPage(*gin.Context c) (
     object main = mainObject(c)
     string appname = c.Param("appname").toLower()
     object app = getAppInfo(appname)
+
+    app.info.authors = migrateAuthorNamesToUsernames(app.info.authors.toArray())
+    app.info.author = app.authors.join(", ")
 
     object file = getAppFile(appname, "osl")
     if file.ok == true (

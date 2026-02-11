@@ -164,7 +164,7 @@ def getAllApps(boolean showHidden) object (
     }
 )
 
-def getAppsByDev(string dev) array (
+def getAppsByDev(string userId) array (
     object resp = getAllApps(true)
     if !resp.ok (
         return []
@@ -174,12 +174,13 @@ def getAppsByDev(string dev) array (
     array appNames = apps.getKeys()
     
     array myApps = []
+    
     for i appNames.len (
         object app = apps[appNames[i]]
         array authors = app.authors
         for j authors.len (
             string author = authors[j]
-            if author == dev (
+            if author == userId (
                 void myApps.append(app)
             )
         )
@@ -245,15 +246,58 @@ def getReviews(string appname) array (
     return reviews
 )
 
-def writeReview(string appname, string by_user, string content) boolean (
+def getReviewsWithUsernames(string appname) array (
+    array reviews = getReviews(appname)
+    array reviewsWithUsernames = []
+    for i reviews.len (
+        object review = reviews[i]
+        string userId = review.user.toStr()
+        string username = getUsernameFromUserId(userId)
+        if username == "" (
+            username = userId
+        )
+        reviewsWithUsernames.append({
+            user: username,
+            content: review.content
+        })
+    )
+    return reviewsWithUsernames
+)
+
+def writeReview(string appname, string by_user_id, string content) boolean (
     string reviewPath = fs.JoinPath("./reviews", appname ++ ".json")
     if !fs.Exists(reviewPath) (
         fs.WriteFile(reviewPath, "[]")
     )
     array reviews = fs.ReadFile(reviewPath).JsonParse()
     reviews.append({
-        user: by_user,
+        user: by_user_id,
         content
     })
+    fs.WriteFile(reviewPath, reviews.JsonFormat())
     return true
+)
+
+def setUserIdFromUsername(string username, string userId) (
+    userIdToUsername[userId] = username
+
+    fs.WriteFile("./userids.json", userIdToUsername.JsonFormat())
+)
+
+def getUsernameFromUserId(string userId) string (
+    return userIdToUsername[userId].toStr()
+)
+
+def migrateAuthorNamesToUsernames(array userIds) array (
+    array usernames = []
+    for i userIds.len (
+        string userId = userIds[i].toStr()
+        string username = getUsernameFromUserId(userId)
+        if username != "" (
+            usernames.append(username)
+        ) else (
+            usernames.append(userId)
+        )
+    )
+    return usernames
 )

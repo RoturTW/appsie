@@ -8,6 +8,9 @@ def handleAppInfo(*gin.Context c) (
         return
     )
 
+    app.info.authors = migrateAuthorNamesToUsernames(app.info.authors.toArray())
+    app.info.author = app.authors.join(", ")
+
     object stats = fs.ReadFile("./stats.json").JsonParse()
     object views = stats.views
     views[appname] = views[appname].toNum() + 1
@@ -22,8 +25,8 @@ def handleAppIcon(*gin.Context c) (
 )
 
 def handleOwnedApps(*gin.Context c) (
-    string username = c.Get("username").toArray()[1].toStr().toLower()
-    if username == "" (
+    string userId = c.MustGet("userId")
+    if userId == "" (
         c.JSON(401, {"error": "Unauthorized"})
         return
     )
@@ -32,11 +35,11 @@ def handleOwnedApps(*gin.Context c) (
     array ownedApps = []
     for i appNames.len (
         string name = appNames[i]
-        if ownerships[name].contains(username) (
+        if ownerships[name].contains(userId) (
             ownedApps.append(name)
         )
     )
-    c.JSON(200, {"ownedApps": ownedApps})
+    c.JSON(200, {"ownedApps": ownedApps.sort()})
 )
 
 def handleAppFile(*gin.Context c) (
@@ -57,7 +60,7 @@ def handleAppFile(*gin.Context c) (
 
     info := app.info
 
-    string username = c.MustGet("username").toStr().toLower()
+    string userId = c.MustGet("userId").toStr().toLower()
     string token = c.Query("auth")
 
     object ownerships = readOwnerships()
@@ -67,8 +70,8 @@ def handleAppFile(*gin.Context c) (
     )
     array owners = rawOwners
     boolean alreadyOwns = false
-    if username != "" (
-        alreadyOwns = owners.contains(username.toLower())
+    if userId != "" (
+        alreadyOwns = owners.contains(userId.toLower())
     )
 
     array authors = info.authors
@@ -78,7 +81,7 @@ def handleAppFile(*gin.Context c) (
     )
     for i authors.len (
         string author = authors[i]
-        if author == username (
+        if author == userId (
             alreadyOwns = true
         )
     )
@@ -88,11 +91,14 @@ def handleAppFile(*gin.Context c) (
             c.JSON(401, { ok: false, error: "missing auth token" })
             return
         )
-        // minus one to account for tax
+        string authorUsername = getUsernameFromUserId(info.authors[1].toStr())
+        if authorUsername == "" (
+            authorUsername = info.authors[1].toStr()
+        )
         object resp = requests.Post("https://api.rotur.dev/me/transfer?auth=" ++ token, {
             body: {
                 amount: info.price.toNum(),
-                to: info.authors[1],
+                to: authorUsername,
                 note: "App store: " ++ info.title.toStr() ++ " purchase",
             }
         })
@@ -106,8 +112,8 @@ def handleAppFile(*gin.Context c) (
         )
     )
 
-    if username != "" and alreadyOwns == false (
-        owners.append(username.toLower())
+    if userId != "" and alreadyOwns == false (
+        owners.append(userId.toLower())
         ownerships[appname] = owners
         writeOwnerships(ownerships)
     )
@@ -123,11 +129,12 @@ def handleAppFile(*gin.Context c) (
 
 def handleAllApps(*gin.Context c) (
     string token = c.Query("auth")
-    string username = ""
+    string userId = ""
+    log token
     if token != "" (
         array parts = token.split(",")
         if parts.len >= 2 (
-            username = parts[2].toStr().toLower()
+            userId = parts[2].toStr().toLower()
         )
     )
 
@@ -137,14 +144,14 @@ def handleAllApps(*gin.Context c) (
         return
     )
 
-    if username != "" (
+    if userId != "" (
         object ownerships = readOwnerships()
         object apps = resp.apps
         array names = apps.getKeys()
         for i names.len (
             string n = names[i]
             array owners = ownerships[n]
-            boolean owns = owners != null and owners.contains(username)
+            boolean owns = owners != null and owners.contains(userId)
             apps[n].owns = owns
         )
         resp.apps = apps
@@ -188,18 +195,18 @@ def handleFeatured(*gin.Context c) (
 def handleGetAppReviews(*gin.Context c) (
     string appname = c.Param("appname").toLower()
 
-    c.JSON(200, getReviews(appname))
+    c.JSON(200, getReviewsWithUsernames(appname))
 )
 
 def handleAppReview(*gin.Context c) (
     string appname = c.Param("appname").toLower()
-    string username = c.MustGet("username")
+    string userId = c.MustGet("userId")
 
     string review = c.Query("content")
     if review == "" (
         c.JSON(400, { ok: false, error: "Missing content" })
     )
 
-    writeReview(appname, username, review)
+    writeReview(appname, userId, review)
     c.JSON(200, { ok: true, error: "Successfully added review" })
 )
