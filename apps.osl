@@ -9,7 +9,7 @@ def handleAppInfo(*gin.Context c) (
     )
 
     app.info.authors = migrateAuthorNamesToUsernames(app.info.authors.toArray())
-    app.info.author = app.authors.join(", ")
+    app.info.author = app.info.authors.join(", ")
 
     object stats = fs.ReadFile("./stats.json").JsonParse()
     object views = stats.views

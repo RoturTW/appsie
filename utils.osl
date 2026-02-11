@@ -152,6 +152,8 @@ def getAllApps(boolean showHidden) object (
         object info = getAppInfo(fileName)
         if info.ok == true (
             object app = info.info
+            app.authors = migrateAuthorNamesToUsernames(app.authors.toArray())
+            app.author = app.authors.join(", ")
             if ((app.hidden == false and app.approved == true) or showHidden == true) (
                 apps[fileName] = app
             )
