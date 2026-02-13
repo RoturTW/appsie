@@ -152,6 +152,7 @@ def getAllApps(boolean showHidden) object (
         object info = getAppInfo(fileName)
         if info.ok == true (
             object app = info.info
+            app.authorIds = app.authors
             app.authors = migrateAuthorNamesToUsernames(app.authors.toArray())
             app.author = app.authors.join(", ")
             if ((app.hidden == false and app.approved == true) or showHidden == true) (
@@ -179,12 +180,8 @@ def getAppsByDev(string userId) array (
     
     for i appNames.len (
         object app = apps[appNames[i]]
-        array authors = app.authors
-        for j authors.len (
-            string author = authors[j]
-            if author == userId (
-                void myApps.append(app)
-            )
+        if app.authorIds.contains(userId) (
+            myApps.append(app)
         )
     )
     return myApps
